@@ -306,7 +306,7 @@ def render_attribute_report(result: AttributeAgreementResult) -> str:
     out.append(_rule())
     k = a.fleiss_kappa_all_trials
     out.append(
-        f"  Fleiss' kappa, all trials pooled      : {k:7.4f}  ({_kappa_label(k)})"
+        f"  Fleiss' kappa, all trials pooled       : {k:7.4f}  ({_kappa_label(k)})"
     )
     if a.fleiss_kappa_bench_verdicts is not None:
         kb = a.fleiss_kappa_bench_verdicts
@@ -347,10 +347,15 @@ def render_attribute_report(result: AttributeAgreementResult) -> str:
         out.append(_rule())
         df = a.disagreement_scenarios
         cols = [c for c in df.columns if c != "within_bench_split"]
-        header = "".join(f"{c:<16}" for c in cols) + "within-bench split"
+        # The scenario column needs room for long scenario identifiers; the
+        # per-bench columns hold short "k/r pass" cells.
+        w0 = max(24, max(len(str(v)) for v in df["scenario"]) + 2)
+        header = f"{cols[0]:<{w0}}" + "".join(f"{c:<14}" for c in cols[1:])
+        header += "within-bench split"
         out.append(header)
         for _, row in df.iterrows():
-            line = "".join(f"{str(row[c]):<16}" for c in cols)
+            line = f"{str(row[cols[0]]):<{w0}}"
+            line += "".join(f"{str(row[c]):<14}" for c in cols[1:])
             line += "yes" if row["within_bench_split"] else "no"
             out.append(line)
         out.append(_rule())
