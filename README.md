@@ -57,13 +57,66 @@ reported alongside any coverage claim.
 
 ## The gap this addresses
 
-ISO 26262 and ISO 21448 both require validation activity, and both say a great
-deal about what that activity has to establish. Neither, as far as I have been
-able to determine, prescribes a method for quantifying the repeatability,
-reproducibility and bias **of the apparatus performing the validation**.
+Simulation credibility is not an unregulated area, and it would be misleading to
+begin as though it were. Several instruments address it directly, and one of them
+is binding law.
 
-That is a specific claim, and it deserves to be stated precisely, because there
-is an obvious objection to it.
+**Commission Implementing Regulation (EU) 2022/1426**, Annex III Part 4, has
+applied in the European Union since September 2022. It is titled, verbatim,
+*"Principles for credibility assessment for using virtual toolchain in ADS
+validation"*, and it is considerably more specific than most people outside
+European type approval expect:
+
+> §3.4.5.1 — "**The quantitative process** of determining the degree to which a
+> model or a simulation is an accurate representation of the real world from the
+> perspective of the intended uses of the M&S requires the selection and
+> definition of several elements."
+
+> §3.2.6.4 — "(a) Stochastic models shall be characterised **in terms of their
+> variance** (b) Stochastic models shall be ensured the possibility of
+> **deterministic re-execution**"
+
+> §3.4.5.9.2 — "The manufacturer shall demonstrate to have appropriately
+> estimated the critical model's inputs by means of robust techniques such as
+> **multiple repetitions** for the assessment of the quantity"
+
+> §3.4.5.9.5 — the manufacturer "shall aim to distinguish between the
+> **aleatory** component of the uncertainty (which can only be estimated but not
+> reduced) and the **epistemic** uncertainty deriving from the lack of knowledge"
+
+That is run-to-run variance, repeated execution, deterministic replay, and a
+precision-versus-bias decomposition — in mandatory form. **UN Regulation No. 157**,
+Annex 4 ¶4.2 separately requires manufacturers to demonstrate "the validation
+performed for the simulation tool chain (correlation of the outcome with physical
+tests)", cross-referring to Schedule 8 of the 1958 Agreement.
+
+So the interesting question is not whether anyone has thought about this. They
+have, and in more detail than the ISO functional-safety standards suggest.
+
+### What those instruments leave open
+
+**None of them defines the metric or the threshold.**
+
+EU 2022/1426 §3.4.5.5.1 provides that *"the requirement for the correlation
+threshold is defined during the M&S analysis"* — that is, by the manufacturer
+whose toolchain is being assessed. Schedule 8 of the 1958 Agreement requires only
+that *"comparability of the test results shall be proven"*, and prescribes no
+tolerance, no acceptance band, and no protocol by which comparability is judged.
+
+The consequence is worth stating plainly: **two manufacturers can both hold
+compliant credibility evidence and there is no basis on which to compare them.**
+Each defined its own threshold. Neither figure means the same thing as the other.
+
+This is the difference between requiring that something be assessed and
+specifying how to measure it. Production metrology settled the equivalent
+question decades ago with AIAG MSA — a named protocol, a variance-component
+decomposition, and acceptance bands (%GRR under 10 acceptable, 10–30 conditional,
+over 30 unacceptable; ndc at least 5) that mean the same thing in every plant
+that uses them. Nothing of that kind exists for an automated-driving bench.
+
+**That specific absence is what this package is about**: not credibility
+assessment in general, which is regulated, but a defined protocol producing
+figures that are comparable between organisations.
 
 ### The obvious objection: isn't this ISO 26262-8 Clause 11?
 
@@ -107,6 +160,21 @@ fit to be used?*; measurement system analysis asks *how much of what it just
 told me was the tool?* Both are worth answering, and answering one does not
 answer the other.
 
+The production analogy is exact. A gauge on a regulated line must be both
+**approved and calibrated** — which is what tool qualification corresponds to —
+**and** subjected to a Gage R&R study, which is what this package corresponds to.
+They are separate activities producing separate artefacts, and no plant I have
+worked in would accept the first as a substitute for the second.
+
+One consequence worth drawing out, because it points at how this would actually
+be adopted rather than at a dispute: Clause 11's **method 1c, "validation of the
+software tool"**, requires test cases derived from the tool's use cases and
+evidence that it meets its requirements. It does not say how that evidence should
+be quantified. **An MSA study is a legitimate way to discharge 1c**, and a more
+informative one than a pass/fail test report, because it yields a number that can
+be trended and compared rather than a verdict that cannot. If you already run
+Clause 11 on your benches, this is meant to slot into it, not to compete with it.
+
 ### The same distinction, applied to coverage
 
 A coverage figure states which hazards, scenarios or ODD regions the campaign
@@ -122,25 +190,53 @@ between them is the interesting number.
 
 ### This is a claim inviting correction
 
-I have not found a standard or a published method that does what is described
-here for automated-driving validation benches. "I have not found it" is a weak
-claim, and the surrounding space is large. Adjacent ground I am aware of, and
-which anyone evaluating this claim should check, includes:
+The claim I am making is narrow, and I want to state its boundaries rather than
+let a reader discover them.
 
-- ISO 26262 (functional safety) and ISO 21448 (SOTIF);
-- ISO 34502 and related scenario-based safety-evaluation work;
-- UL 4600, which discusses validation and simulation credibility;
-- NASA-STD-7009, on models-and-simulations credibility assessment;
-- the ASME V&V series on verification and validation in computational
-  modelling;
-- the software-engineering mutation-testing literature, which is the closest
-  analogue I know of to the seeded-fault component.
+**What I am not claiming:** that simulation credibility is unaddressed. It is
+addressed, bindingly, by EU 2022/1426 Annex III Part 4 and by UN-R157 Annex 4
+with Schedule 8, and conceptually by NASA-STD-7009 and the ASME V&V series. An
+earlier draft of this README understated that, and it was wrong to.
 
-If any of these — or anything else — already prescribes a quantitative
-repeatability, reproducibility and bias characterisation for a validation
-bench, **please open an issue**. I would much rather cite prior art than
-duplicate it, and a pointer that collapses this argument is more useful to me
-than agreement with it.
+**What I am claiming:** that no published protocol applies the production
+measurement-system-analysis method — a variance-component decomposition into
+repeatability and reproducibility with named acceptance bands, a linearity and
+stability study across the operating range, calibrated seeded-fault positive
+controls, and reproducibility across independent facilities under a common
+protocol — as an integrated qualification of an automated-driving validation
+bench treated as a measurement instrument. And that because no instrument defines
+the metric, credibility evidence is not comparable between organisations.
+
+"I have not found it" remains a weak form of argument and the surrounding space
+is large. Ground I am aware of, and which anyone evaluating this should check:
+
+- **Commission Implementing Regulation (EU) 2022/1426**, Annex III Part 4 —
+  the most directly on-point instrument I know of;
+- **UN-R157** Annex 4 ¶4.2 and **Schedule 8 of the 1958 Agreement**, "General
+  conditions for virtual testing methods";
+- **UNECE NATM** (New Assessment/Test Method) master document;
+- ISO 26262 (functional safety), ISO 21448 (SOTIF), and ISO 34502 Annex F,
+  "Qualification of virtual test platforms" — which is informative rather than
+  normative, and I have not read its body text;
+- UL 4600, which discusses validation and simulation credibility — I have not
+  read it;
+- NASA-STD-7009 on models-and-simulations credibility, and the ASME V&V series
+  on verification and validation in computational modelling, including V&V 40's
+  risk-informed credibility framework;
+- China's GB 44721 and GB/T 47025 series on ADS simulation test methods;
+- **ASAM's "Quantifying Simulation Quality" project** (P_2025_04), running since
+  December 2025, whose stated premise is that no standardised metrics currently
+  exist for assessing simulation quality — if that project publishes something
+  that does what is described here, this package should defer to it;
+- the software-engineering mutation-testing literature, the closest analogue I
+  know of to the seeded-fault component.
+
+If any of these — or anything else — already prescribes a variance-decomposed
+repeatability and reproducibility characterisation of a validation bench with
+defined acceptance criteria, **please open an issue**. I would much rather cite
+prior art than duplicate it, and a pointer that collapses this argument is more
+useful to me than agreement with it. That has already happened once: EU 2022/1426
+is in this list because looking for the counter-argument found it.
 
 ---
 
