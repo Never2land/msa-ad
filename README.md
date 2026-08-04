@@ -85,10 +85,19 @@ European type approval expect:
 > reduced) and the **epistemic** uncertainty deriving from the lack of knowledge"
 
 That is run-to-run variance, repeated execution, deterministic replay, and a
-precision-versus-bias decomposition — in mandatory form. **UN Regulation No. 157**,
-Annex 4 ¶4.2 separately requires manufacturers to demonstrate "the validation
-performed for the simulation tool chain (correlation of the outcome with physical
-tests)", cross-referring to Schedule 8 of the 1958 Agreement.
+precision-versus-bias decomposition — in mandatory form.
+
+**UN Regulation No. 157**, Annex 4 ¶4.2 separately requires that "manufacturers
+shall demonstrate the scope of the simulation tool, its validity for the scenario
+concerned as well as the validation performed for the simulation tool chain
+(correlation of the outcome with physical tests)". The same paragraph, as amended
+in 2023, adds that "simulation shall not be a substitute for physical tests in
+Annex 5 and Annex 6 to this UN Regulation" — worth noting, because it shows a
+regulator that requires toolchain validation and still declines to let simulation
+stand alone. ¶4.2 cross-refers to **Schedule 8 of the 1958 Agreement**, "General
+conditions for virtual testing methods", whose §2.2 provides that "the
+mathematical model shall be validated in comparison with the actual test
+conditions" and that "comparability of the test results shall be proven".
 
 So the interesting question is not whether anyone has thought about this. They
 have, and in more detail than the ISO functional-safety standards suggest.
@@ -99,9 +108,18 @@ have, and in more detail than the ISO functional-safety standards suggest.
 
 EU 2022/1426 §3.4.5.5.1 provides that *"the requirement for the correlation
 threshold is defined during the M&S analysis"* — that is, by the manufacturer
-whose toolchain is being assessed. Schedule 8 of the 1958 Agreement requires only
-that *"comparability of the test results shall be proven"*, and prescribes no
-tolerance, no acceptance band, and no protocol by which comparability is judged.
+whose toolchain is being assessed.
+
+Schedule 8 of the 1958 Agreement is more striking still. It is roughly 350 words
+in three short sections. It requires that "comparability of the test results shall
+be proven", and then stops. It names no output quantity to be compared, specifies
+no number of physical tests ("as appropriate"), states no degree of agreement, and
+incorporates no external standard by reference — no ISO, no ASME V&V, nothing. The
+words *tolerance*, *threshold*, *criterion*, *confidence level* and *error norm* do
+not appear in it at all. The closest the chain comes to a check is R157 ¶4.2.1,
+under which the approval authority *may* verify the accuracy of simulation tools
+against track or road results — a discretionary power held by the authority, not a
+criterion binding the manufacturer.
 
 The consequence is worth stating plainly: **two manufacturers can both hold
 compliant credibility evidence and there is no basis on which to compare them.**
@@ -212,8 +230,10 @@ is large. Ground I am aware of, and which anyone evaluating this should check:
 
 - **Commission Implementing Regulation (EU) 2022/1426**, Annex III Part 4 —
   the most directly on-point instrument I know of;
-- **UN-R157** Annex 4 ¶4.2 and **Schedule 8 of the 1958 Agreement**, "General
-  conditions for virtual testing methods";
+- **UN-R157** Annex 4 ¶4.2 (consolidated text: E/ECE/TRANS/505/Rev.3/Add.156/Rev.1,
+  27 March 2025; authentic text ECE/TRANS/WP.29/2022/59/Rev.1) and **Schedule 8 of
+  the 1958 Agreement Rev.3**, "General conditions for virtual testing methods"
+  (authentic text ECE/TRANS/WP.29/2016/2, §2.2) — Schedule 8 has never been amended;
 - **UNECE NATM** (New Assessment/Test Method) master document;
 - ISO 26262 (functional safety), ISO 21448 (SOTIF), and ISO 34502 Annex F,
   "Qualification of virtual test platforms" — which is informative rather than
