@@ -313,10 +313,22 @@ class TestIndependentLeastSquaresCrosscheck:
 class TestAIAGWorkedExample:
     """AIAG MSA 4th edition gage study data set.
 
-    The scenario/appraiser/equipment sums of squares below reproduce the
-    published ANOVA table for this data set. They are additionally
-    cross-checked against an independent least-squares computation in
-    ``TestIndependentLeastSquaresCrosscheck``.
+    Scope of what these assertions establish, stated precisely:
+
+    * The part, appraiser and equipment sums of squares below match the
+      published ANOVA table for this data set.
+    * The interaction sum of squares is asserted at the value this
+      implementation computes from the data. It has **not** been checked
+      against the printed table, and the reference value is not restated
+      here from memory. It is instead cross-checked against an independent
+      least-squares computation in ``TestIndependentLeastSquaresCrosscheck``,
+      which is what actually establishes correctness.
+    * The primary correctness evidence for this module is the hand-computed
+      example in ``TestHandComputedGageRR``, where every quantity is derived
+      arithmetically in the comments above it.
+
+    Anyone with a copy of the standard is invited to check the interaction
+    row and open an issue if it disagrees.
     """
 
     def test_published_sums_of_squares(self):
