@@ -794,6 +794,26 @@ Issues and pull requests welcome. The two most useful things anyone could send:
 
 ---
 
+## Citation
+
+Machine-readable citation metadata lives in [`CITATION.cff`](CITATION.cff);
+GitHub renders it as the "Cite this repository" button in the sidebar.
+
+An archived, citable snapshot is deposited on Zenodo. Cite the **concept DOI**,
+which always resolves to the latest archived version:
+
+<!-- Replace the placeholder below once the Zenodo deposit exists.
+     See ZENODO-STEPS.md for how to obtain it. -->
+
+> Wang, L. *msa-ad: Measurement System Analysis for Automated-Driving
+> Validation.* Zenodo. DOI: `10.5281/zenodo.XXXXXXX` *(pending — see
+> [ZENODO-STEPS.md](ZENODO-STEPS.md))*
+
+If you need to pin the exact code you ran, cite the version DOI of that
+specific release instead; every release has its own.
+
+---
+
 ## Author and licence
 
 Linlin Wang.

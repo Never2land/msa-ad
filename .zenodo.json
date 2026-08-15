@@ -1,0 +1,28 @@
+{
+  "upload_type": "software",
+  "title": "msa-ad: Measurement System Analysis for Automated-Driving Validation",
+  "description": "<p>A Python implementation of Measurement System Analysis (MSA) methods applied to automated-driving validation benches.</p><p>The package provides two groups of analyses. <strong>Bench characterisation</strong> decomposes the variation in a bench result into scenario, bench and repeatability components: crossed ANOVA gage repeatability and reproducibility (Gage R&amp;R) with %GRR and number of distinct categories for continuous safety-margin metrics such as minimum time-to-collision; bias and linearity studies against reference values; and attribute agreement analysis with Cohen's kappa, Fleiss' kappa and Wilson confidence intervals for binary pass/fail verdicts, where a variance decomposition is not applicable. <strong>Coverage-claim verification</strong> runs a catalogue of seeded known faults through the production test campaign and reports the measured detection rate, with Wilson intervals, against any claimed coverage figure.</p><p>The intended application is simulation, hardware-in-the-loop (HIL) and fault-injection test benches used in automated-driving validation. The statistical methods follow the AIAG Measurement Systems Analysis reference manual, 4th edition.</p><p>Requires Python 3.10 or later. Depends only on numpy, scipy and pandas. The test suite asserts the computed variance components, kappa statistics and confidence intervals against independently known values.</p><p>This is a proposed method and a reference implementation. It is not a standard and has not been validated against industrial data; see the repository README for the full statement of status and limitations.</p>",
+  "creators": [
+    {
+      "name": "Wang, Linlin"
+    }
+  ],
+  "license": "apache-2.0",
+  "version": "0.1.1",
+  "language": "eng",
+  "access_right": "open",
+  "keywords": [
+    "measurement system analysis",
+    "gage R&R",
+    "attribute agreement",
+    "Cohen's kappa",
+    "Fleiss' kappa",
+    "automated driving",
+    "validation",
+    "simulation",
+    "hardware-in-the-loop",
+    "fault injection",
+    "functional safety",
+    "Python"
+  ]
+}

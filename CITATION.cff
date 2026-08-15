@@ -1,0 +1,53 @@
+# Citation File Format 1.2.0 — https://citation-file-format.github.io/
+# GitHub renders a "Cite this repository" widget from this file.
+# Zenodo also reads it, but only when .zenodo.json is absent; this repository
+# ships both, so .zenodo.json is what Zenodo actually uses. Keep the two in sync.
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata in this file."
+title: "msa-ad: Measurement System Analysis for Automated-Driving Validation"
+abstract: >-
+  A Python implementation of Measurement System Analysis (MSA) methods applied to
+  automated-driving validation benches. Provides crossed ANOVA gage repeatability
+  and reproducibility (Gage R&R) for continuous safety-margin metrics, bias and
+  linearity studies against reference values, attribute agreement analysis with
+  Cohen's and Fleiss' kappa for binary pass/fail verdicts, and seeded-fault
+  coverage-claim verification with Wilson confidence intervals. Targets
+  simulation, hardware-in-the-loop (HIL) and fault-injection test benches.
+  Depends only on numpy, scipy and pandas.
+type: software
+authors:
+  - family-names: Wang
+    given-names: Linlin
+    # PLACEHOLDER FOR THE AUTHOR: if you have an ORCID iD, uncomment the next
+    # line and replace the digits. Leave it commented out otherwise — an
+    # invalid or fabricated ORCID is worse than no ORCID.
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+    #
+    # PLACEHOLDER FOR THE AUTHOR: uncomment and fill in if you want an
+    # institutional affiliation shown alongside your name.
+    # affiliation: "Your institution"
+version: "0.1.1"
+date-released: "2026-08-15"
+license: Apache-2.0
+repository-code: "https://github.com/Never2land/msa-ad"
+url: "https://github.com/Never2land/msa-ad"
+keywords:
+  - measurement system analysis
+  - gage R&R
+  - attribute agreement
+  - Cohen's kappa
+  - Fleiss' kappa
+  - automated driving
+  - validation
+  - simulation
+  - hardware-in-the-loop
+  - fault injection
+  - functional safety
+  - Python
+# PLACEHOLDER FOR THE AUTHOR: after Zenodo mints the DOI, uncomment the block
+# below and paste the *concept* DOI (the one that always resolves to the latest
+# version). See ZENODO-STEPS.md.
+# identifiers:
+#   - type: doi
+#     value: "10.5281/zenodo.XXXXXXX"
+#     description: "Concept DOI — resolves to the latest version of msa-ad."
