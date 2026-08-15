@@ -44,7 +44,7 @@ from .seed_faults import (
     compare_claimed_coverage,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Linlin Wang"
 
 __all__ = [
