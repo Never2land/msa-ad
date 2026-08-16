@@ -1,0 +1,64 @@
+{
+  "analysis_script_sha256": "5281161b6a617663d8433d30d614e001e7e08696ea3bad94c08ea1351a87314c",
+  "dataset_doi": "https://doi.org/10.21949/1504477",
+  "dataset_page": "https://data.transportation.gov/Automobiles/Next-Generation-Simulation-NGSIM-Vehicle-Trajector/8ect-6jqj",
+  "generated_utc": "2026-08-16T07:46:02.904211+00:00",
+  "msa_ad_git_commit": "b244e87d416b14f1779b408d67512854575a8e87",
+  "msa_ad_version": "0.2.0",
+  "numpy": "2.5.1",
+  "outputs": {
+    "baseline_monitor_results.csv": {
+      "bytes": 1233,
+      "sha256": "db0e65532166493ec78cec8d299c29af61ae0c9756df97077edf22f6b6ee9666"
+    },
+    "bench_runs.csv": {
+      "bytes": 30511,
+      "sha256": "c96290531da8c89c1d2764faad26997c0dda7a0db1e528115bb2a3c4faddbe92"
+    },
+    "campaign_results.csv": {
+      "bytes": 6717,
+      "sha256": "0ded86ebebb0a7ea4f671b990eb593675aa4460c7023d19ad35e43d3a516a614"
+    },
+    "fault_catalogue.csv": {
+      "bytes": 15946,
+      "sha256": "016d9735d5688e5b5a885a46ecb72c2119016f3164a5eead536156e92261e56c"
+    },
+    "full_statistical_output.txt": {
+      "bytes": 14196,
+      "sha256": "3719bd919e529e3739781fb0f0a56c01d98bbf7037f16d2597dd916b7c276fde"
+    },
+    "report.md": {
+      "bytes": 10233,
+      "sha256": "59a525d41f439e2d1a5d181794cc3138c1d6805dcdb948008c25e47cab239aa5"
+    },
+    "selected_scenarios.csv": {
+      "bytes": 4783,
+      "sha256": "ee622a11f8314d74b226168a17c528972e782ad0de17950f4b2412194bc73539"
+    }
+  },
+  "pandas": "3.0.5",
+  "parameters": {
+    "n_fault_baselines_target": 20,
+    "n_grr_scenarios": 30,
+    "response_time_s": 2.0,
+    "sampling_phases": [
+      0,
+      1,
+      2
+    ],
+    "seeded_fault_detection_threshold": 0.8,
+    "verdict_threshold_ft": 0.0,
+    "window_frames": 81
+  },
+  "python": "3.13.11",
+  "raw_path": "data/ngsim_us101_60s.csv",
+  "raw_rows": 75110,
+  "raw_sha256": "c24113dc44c0b2e5af4aad99f13a647a05dbba7d84a3ce1ac19d6154eebfc981",
+  "raw_unique_vehicles": 277,
+  "scipy": "1.18.0",
+  "source_time_range_ms": [
+    1118847200000,
+    1118847260000
+  ],
+  "source_url": "https://data.transportation.gov/resource/8ect-6jqj.csv?%24select=vehicle_id%2Cframe_id%2Ctotal_frames%2Cglobal_time%2Clocal_x%2Clocal_y%2Cglobal_x%2Cglobal_y%2Cv_length%2Cv_width%2Cv_class%2Cv_vel%2Cv_acc%2Clane_id%2Cpreceding%2Cfollowing%2Cspace_headway%2Ctime_headway%2Clocation&%24where=location%3D%27us-101%27%20and%20global_time%20between%201118847200000%20and%201118847260000&%24order=global_time%2Cvehicle_id&%24limit=100000"
+}

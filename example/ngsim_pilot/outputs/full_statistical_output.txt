@@ -1,0 +1,293 @@
+==============================================================================
+BENCH CHARACTERISATION - GAGE R&R (crossed ANOVA, AIAG MSA)
+==============================================================================
+Metric              : residual_clearance_ft
+Design              : 30 scenarios x 3 benches x 3 replicates = 270 executions
+Scenario column     : scenario_id   Bench column: bench_id
+
+ANOVA
+------------------------------------------------------------------------------
+source                       df           SS           MS         F        p
+scenario_id (scenario)       29412065.908529 14209.16926021258.0125         
+bench_id (bench)              2    13.596700     6.798350   10.1709         
+scenario x bench             58    38.768056     0.668415    0.0810   1.0000
+repeatability (error)       180  1485.249352     8.251385                   
+total                       269413603.522637                                
+------------------------------------------------------------------------------
+Scenario x bench interaction: pooled into error (p = 1.0000 > alpha = 0.25)
+  AIAG MSA tests the interaction at alpha = 0.25 and pools it into
+  the error term when it is not significant at that level.
+
+VARIANCE COMPONENTS
+------------------------------------------------------------------------------
+component                              variance     std dev     % of TV
+Repeatability (EV, equipment)          6.403434    2.530501       6.36%
+Reproducibility (AV, bench)            0.004388    0.066242       0.17%
+   bench effect only                   0.004388    0.066242            
+   scenario x bench interaction        0.000000    0.000000       0.00%
+Gage R&R (GRR)                         6.407822    2.531368       6.36%
+Scenario variation (PV)             1578.085092   39.725119      99.80%
+Total variation (TV)                1584.492914   39.805689     100.00%
+------------------------------------------------------------------------------
+  Percentages are of total variation (study variation), i.e.
+  100 * sigma_component / sigma_total. They are ratios of standard
+  deviations and therefore do not sum to 100%.
+  GRR = sqrt(EV^2 + AV^2);  TV = sqrt(GRR^2 + PV^2).
+
+ACCEPTANCE (AIAG MSA)
+------------------------------------------------------------------------------
+  %GRR = 6.36%   ->   ACCEPTABLE
+  %GRR = 6.4% < 10% - measurement system acceptable (AIAG MSA).
+    < 10%      acceptable
+    10% - 30%   marginal / conditionally acceptable
+    > 30%      unacceptable
+  ndc  = floor(1.41 * PV / GRR) = floor(1.41 * 39.7251 / 2.5314) = 22   ->   OK
+  ndc >= 5: the bench can resolve at least 22 distinct levels of the scenario
+  population.
+
+PER-BENCH BREAKDOWN
+------------------------------------------------------------------------------
+bench               mean   bias vs grand   repeat. SD   SD ratio
+DOT_published_speed     74.2833         -0.3135       2.7672       1.00x
+global_position_SG     74.7962          0.1994       2.9018       1.05x
+local_position_SG     74.7110          0.1141       2.9456       1.06x
+------------------------------------------------------------------------------
+  Levene test for equal within-bench variance: W = 0.0025, p = 0.9975
+  -> no significant difference in within-bench variance (alpha = 0.05).
+
+==============================================================================
+BENCH CHARACTERISATION - ATTRIBUTE AGREEMENT (pass/fail verdicts)
+==============================================================================
+Verdict column      : verdict  (categories: ['pass'])
+Design              : 30 scenarios x 3 benches x 3 replicates = 270 executions
+Intervals           : Wilson score, 95%
+
+  Binary verdicts are nominal categories, so this is an agreement
+  analysis, not a variance decomposition. There is no %GRR and no
+  ndc here, and there should not be.
+
+WITHIN-BENCH REPEATABILITY  (all replicates of a scenario agree)
+------------------------------------------------------------------------------
+bench          agree    of   proportion  95% Wilson CI           pass rate
+DOT_published_speed      30    30       1.0000  [ 0.8865,  1.0000]         1.0000
+global_position_SG      30    30       1.0000  [ 0.8865,  1.0000]         1.0000
+local_position_SG      30    30       1.0000  [ 0.8865,  1.0000]         1.0000
+------------------------------------------------------------------------------
+pooled            90    90       1.0000  [ 0.9591,  1.0000]
+
+BETWEEN-BENCH REPRODUCIBILITY
+------------------------------------------------------------------------------
+  Strict   (every trial on every bench agrees) : 30/30 = 1.0000  [ 0.8865,  1.0000]
+  Majority (bench majority verdicts agree)     : 30/30 = 1.0000  [ 0.8865,  1.0000]
+  The strict figure also fails when one bench is internally
+  inconsistent, so it is bounded above by within-bench repeatability.
+  The majority figure isolates between-bench disagreement.
+
+CHANCE-CORRECTED AGREEMENT
+------------------------------------------------------------------------------
+  Fleiss' kappa, all trials pooled       :     nan  (undefined (no variation in verdicts))
+  Fleiss' kappa, bench majority verdicts :     nan  (undefined (no variation in verdicts))
+
+bench pair                 agreement  95% Wilson CI           Cohen kappa
+DOT_published_speed vs global_position_SG      1.0000  [ 0.8865,  1.0000]              nan
+DOT_published_speed vs local_position_SG      1.0000  [ 0.8865,  1.0000]              nan
+global_position_SG vs local_position_SG      1.0000  [ 0.8865,  1.0000]              nan
+  Kappa bands (Landis & Koch 1977) are descriptive conventions, not
+  acceptance criteria; they are reported as an aid to reading.
+
+BIAS CONFIGURATION: DOT_published_speed
+
+==============================================================================
+BENCH CHARACTERISATION - BIAS AND LINEARITY
+==============================================================================
+Observations        : 90
+
+BIAS  (bench value minus reference value)
+------------------------------------------------------------------------------
+  Mean bias      : +0.425333
+  SD of bias     : 2.986368
+  95% CI on mean : [-0.2001,  1.0508]
+  t = 1.3512, p = 0.1801
+  -> no significant bias detected (alpha = 0.05)
+
+LINEARITY  (bias regressed on reference value)
+------------------------------------------------------------------------------
+  slope     = -0.008550  (p = 0.2868)
+  intercept = +1.056855  (p = 0.1172)
+  R^2       = 0.0129
+  -> no significant linearity problem; bias is consistent across
+     the reference range examined.
+
+BY REFERENCE VALUE
+------------------------------------------------------------------------------
+   reference     n     mean bias          sd
+     10.4500     3      7.911667    6.856032
+     10.9200     3      0.321000    0.204648
+     28.4500     3      0.236000    0.480944
+     30.9800     3      0.715000    1.632756
+     33.6500     3      0.380000    0.490395
+     36.9500     3      0.132333    0.175161
+     43.2900     3      0.129333    0.348622
+     46.2900     3      0.489333    0.177427
+     46.6400     3      0.587667    0.417998
+     48.1500     3      0.248667    0.178987
+     55.4600     3      0.371667    0.502384
+     61.9200     3      0.589667    0.460567
+     62.0600     3      0.196333    0.328587
+     62.1200     3     -0.011000    0.463617
+     71.1900     3     -6.852667   13.056566
+     72.2500     3      0.551000    0.702590
+     76.4700     3      0.125000    0.163557
+     76.6700     3      0.371333    0.444579
+     77.2100     3      0.238000    0.116773
+     79.1200     3      0.441000    0.527102
+     89.0000     3      0.471000    0.703311
+     91.9900     3      0.912000    1.010000
+    104.1400     3      0.406667    0.699107
+    105.7200     3      0.385333    0.553348
+    107.5400     3      1.361000    1.527016
+    119.0100     3      0.531000    0.652021
+    120.1000     3      0.179000    0.345892
+    121.3700     3      0.121333    0.372559
+    133.4700     3      0.989667    1.213512
+    193.1600     3      0.231667    0.266733
+
+BIAS CONFIGURATION: global_position_SG
+
+==============================================================================
+BENCH CHARACTERISATION - BIAS AND LINEARITY
+==============================================================================
+Observations        : 90
+
+BIAS  (bench value minus reference value)
+------------------------------------------------------------------------------
+  Mean bias      : +0.938233
+  SD of bias     : 3.136053
+  95% CI on mean : [ 0.2814,  1.5951]
+  t = 2.8382, p = 0.0056
+  -> bias differs significantly from zero
+
+LINEARITY  (bias regressed on reference value)
+------------------------------------------------------------------------------
+  slope     = -0.011919  (p = 0.1563)
+  intercept = +1.818555  (p = 0.0108)
+  R^2       = 0.0227
+  -> no significant linearity problem; bias is consistent across
+     the reference range examined.
+
+BY REFERENCE VALUE
+------------------------------------------------------------------------------
+   reference     n     mean bias          sd
+     10.4500     3      9.396545    6.332149
+     10.9200     3      2.124498    0.175128
+     28.4500     3      0.236000    0.480944
+     30.9800     3     -0.314166    1.313949
+     33.6500     3      1.806872    0.474116
+     36.9500     3      0.132333    0.175161
+     43.2900     3      0.843930    0.131815
+     46.2900     3      1.803067    0.171795
+     46.6400     3      1.460197    0.769648
+     48.1500     3      0.819364    0.172427
+     55.4600     3      0.436092    0.590418
+     61.9200     3      1.496440    0.245532
+     62.0600     3      0.196333    0.328587
+     62.1200     3      2.533702    0.071744
+     71.1900     3     -5.206615   14.188015
+     72.2500     3      0.551000    0.702590
+     76.4700     3      0.125000    0.163557
+     76.6700     3      0.371333    0.444579
+     77.2100     3      1.298872    0.017453
+     79.1200     3      0.441000    0.527102
+     89.0000     3      0.471000    0.703311
+     91.9900     3      0.912000    1.010000
+    104.1400     3      0.320214    0.777197
+    105.7200     3      0.385333    0.553348
+    107.5400     3      1.361000    1.527016
+    119.0100     3      0.531000    0.652021
+    120.1000     3      1.005875    0.250255
+    121.3700     3     -0.106739    0.256897
+    133.4700     3      0.989667    1.213512
+    193.1600     3      1.725857    0.038473
+
+BIAS CONFIGURATION: local_position_SG
+
+==============================================================================
+BENCH CHARACTERISATION - BIAS AND LINEARITY
+==============================================================================
+Observations        : 90
+
+BIAS  (bench value minus reference value)
+------------------------------------------------------------------------------
+  Mean bias      : +0.852990
+  SD of bias     : 2.989176
+  95% CI on mean : [ 0.2269,  1.4791]
+  t = 2.7072, p = 0.0081
+  -> bias differs significantly from zero
+
+LINEARITY  (bias regressed on reference value)
+------------------------------------------------------------------------------
+  slope     = -0.009887  (p = 0.2180)
+  intercept = +1.583229  (p = 0.0198)
+  R^2       = 0.0172
+  -> no significant linearity problem; bias is consistent across
+     the reference range examined.
+
+BY REFERENCE VALUE
+------------------------------------------------------------------------------
+   reference     n     mean bias          sd
+     10.4500     3      7.649685    6.768993
+     10.9200     3      1.832333    0.072006
+     28.4500     3      0.236000    0.480944
+     30.9800     3      0.667418    1.041713
+     33.6500     3      1.678091    0.370686
+     36.9500     3      0.132333    0.175161
+     43.2900     3      1.063000    0.124868
+     46.2900     3      1.495497    0.145200
+     46.6400     3      2.036036    1.190153
+     48.1500     3      0.844873    0.215597
+     55.4600     3      0.478667    0.652561
+     61.9200     3      1.560607    0.204301
+     62.0600     3      0.196333    0.328587
+     62.1200     3      0.371539    0.230768
+     71.1900     3     -5.090394   14.242490
+     72.2500     3      0.551000    0.702590
+     76.4700     3      0.125000    0.163557
+     76.6700     3      0.371333    0.444579
+     77.2100     3      1.456048    0.232898
+     79.1200     3      0.441000    0.527102
+     89.0000     3      0.471000    0.703311
+     91.9900     3      0.912000    1.010000
+    104.1400     3      0.557539    0.795770
+    105.7200     3      0.385333    0.553348
+    107.5400     3      1.361000    1.527016
+    119.0100     3      0.531000    0.652021
+    120.1000     3      0.807509    0.152001
+    121.3700     3     -0.270976    0.480196
+    133.4700     3      0.989667    1.213512
+    193.1600     3      1.749230    0.157586
+
+==============================================================================
+COVERAGE-CLAIM VERIFICATION - SEEDED KNOWN FAULTS
+==============================================================================
+Catalogue           : 100 faults
+Executed            : 100
+Expected to detect  : 100  (headline denominator)
+Detected            : 100
+Intervals           : Wilson score, 95%
+
+COVERAGE-VALIDITY RATIO
+------------------------------------------------------------------------------
+  detected / seeded-and-expected = 100/100 = 1.0000
+  95% Wilson CI: [ 0.9630,  1.0000]
+  0 seeded fault(s) escaped detection.
+
+BY HAZARD CLASS
+------------------------------------------------------------------------------
+hazard class                  seeded  det.  esc.     rate  95% Wilson CI           flag
+CLOCK_STEP                        20    20     0   1.0000  [ 0.8389,  1.0000]          
+LEAD_SIGNAL_LOSS                  20    20     0   1.0000  [ 0.8389,  1.0000]          
+POSITION_STEP                     20    20     0   1.0000  [ 0.8389,  1.0000]          
+SPEED_BIAS                        20    20     0   1.0000  [ 0.8389,  1.0000]          
+SPEED_FREEZE                      20    20     0   1.0000  [ 0.8389,  1.0000]          
+------------------------------------------------------------------------------
+  FLAG = Wilson lower bound below the configured threshold of 0.80.
