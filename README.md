@@ -1056,12 +1056,8 @@ GitHub renders it as the "Cite this repository" button in the sidebar.
 An archived, citable snapshot is deposited on Zenodo. Cite the **concept DOI**,
 which always resolves to the latest archived version:
 
-<!-- Replace the placeholder below once the Zenodo deposit exists.
-     See ZENODO-STEPS.md for how to obtain it. -->
-
 > Wang, L. *msa-ad: Measurement System Analysis for Automated-Driving
-> Validation.* Zenodo. DOI: `10.5281/zenodo.XXXXXXX` *(pending — see
-> [ZENODO-STEPS.md](ZENODO-STEPS.md))*
+> Validation.* Zenodo. DOI: [`10.5281/zenodo.21963049`](https://doi.org/10.5281/zenodo.21963049)
 
 If you need to pin the exact code you ran, cite the version DOI of that
 specific release instead; every release has its own.

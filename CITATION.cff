@@ -44,10 +44,7 @@ keywords:
   - fault injection
   - functional safety
   - Python
-# PLACEHOLDER FOR THE AUTHOR: after Zenodo mints the DOI, uncomment the block
-# below and paste the *concept* DOI (the one that always resolves to the latest
-# version). See ZENODO-STEPS.md.
-# identifiers:
-#   - type: doi
-#     value: "10.5281/zenodo.XXXXXXX"
-#     description: "Concept DOI — resolves to the latest version of msa-ad."
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.21963049"
+    description: "Concept DOI — resolves to the latest version of msa-ad."
