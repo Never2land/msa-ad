@@ -26,7 +26,7 @@ authors:
     # PLACEHOLDER FOR THE AUTHOR: uncomment and fill in if you want an
     # institutional affiliation shown alongside your name.
     # affiliation: "Your institution"
-version: "0.1.1"
+version: "0.2.0"
 date-released: "2026-08-15"
 license: Apache-2.0
 repository-code: "https://github.com/Never2land/msa-ad"

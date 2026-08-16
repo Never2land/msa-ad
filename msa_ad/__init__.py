@@ -56,7 +56,7 @@ from .two_tier import (
     two_tier_gage_rr_from_frames,
 )
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 __author__ = "Linlin Wang"
 
 __all__ = [
