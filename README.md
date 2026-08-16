@@ -45,8 +45,17 @@ The mapping onto AIAG's crossed Gage R&R design is direct:
 | --------------- | ---------------------------------------------------- |
 | part            | scenario                                             |
 | appraiser       | bench (simulation host, HIL rig, fault-injection rig)|
-| trial/replicate | repeated execution, typically varying the random seed|
+| trial/replicate | repeated execution of the same scenario              |
 | measurement     | safety-margin metric, or pass/fail verdict           |
+
+The replicate row is where the transfer stops being mechanical. On a bench,
+repeated execution usually means a new random seed, and the seed drives
+*deliberately injected* stochasticity — traffic-agent behaviour, sensor-noise
+models. That scatter is aleatory variation of the scenario, not error of the
+apparatus, and charging it to repeatability produces a `%GRR` that describes
+the stochastic model rather than the rig. The **two-tier design** replicates
+twice, once with the seed held fixed and once with it varied, and reports the
+two characterisations side by side rather than as one confounded figure.
 
 **2. Coverage-claim verification.** A catalogue of known faults is injected and
 run through the *production* campaign — not a special campaign built to catch
@@ -287,9 +296,9 @@ python example/run_example.py --regenerate
 ```python
 import pandas as pd
 from msa_ad import (
-    gage_rr_anova, attribute_agreement,
+    gage_rr_anova, two_tier_gage_rr, attribute_agreement,
     analyse_seeded_faults, compare_claimed_coverage,
-    render_gage_rr_report, render_seeded_fault_report,
+    render_gage_rr_report, render_two_tier_report, render_seeded_fault_report,
 )
 
 runs = pd.read_csv("example/bench_runs.csv")
@@ -299,6 +308,18 @@ grr = gage_rr_anova(runs, scenario_col="scenario_id",
                     bench_col="bench_id", value_col="min_ttc_s")
 print(render_gage_rr_report(grr))
 print(grr.pct_grr, grr.ndc, grr.verdict)
+
+# Replicates split into fixed-seed and varied-seed tiers -> two-tier study
+two_tier = two_tier_gage_rr(
+    pd.read_csv("example/bench_runs_two_tier.csv"),
+    value_col="min_ttc_s", tier_col="tier",
+    deterministic_benches=["HIL-A", "HIL-B"],
+)
+print(render_two_tier_report(two_tier))
+print(two_tier.fixed_seed.pct_grr,       # the instrument
+      two_tier.varied_seed.pct_grr,      # the stochastic model
+      two_tier.var_aleatory, two_tier.aleatory_clamped,
+      two_tier.determinism_verdict)
 
 # Binary pass/fail verdicts -> attribute agreement, NOT variance decomposition
 attr = attribute_agreement(runs, verdict_col="verdict")
@@ -313,8 +334,10 @@ claim = compare_claimed_coverage(seeded, claimed_coverage=0.95)
 ```
 
 Passing the binary `verdict` column to `gage_rr_anova` raises
-`BinaryDataError` rather than returning a meaningless `%GRR`. That guard is a
-deliberate feature; see "Statistical notes" below.
+`BinaryDataError` rather than returning a meaningless `%GRR`. Passing only one
+tier to `two_tier_gage_rr` raises `MissingTierError` rather than quietly
+reporting a confounded figure as if it were an instrument characterisation.
+Both guards are deliberate features; see "Statistical notes" below.
 
 ---
 
@@ -325,8 +348,8 @@ from a fixed seed and is not measured data from any bench, programme or
 vehicle. It is constructed to contain findings, because a demonstration in
 which everything passes demonstrates nothing: one bench (`HIL-C`) has roughly
 four times the repeatability standard deviation of the others, several
-scenarios sit near the pass/fail threshold, and one hazard class detects
-poorly.
+scenarios sit near the pass/fail threshold, one hazard class detects poorly,
+and one bench documented as reproducing a fixed seed exactly does not.
 
 Output of `python example/run_example.py`, lightly elided where marked:
 
@@ -425,7 +448,106 @@ BinaryDataError raised, as it should be:
     Use msa_ad.gage_rr.attribute_agreement() instead. [...]
 ```
 
-### 1c. Bench characterisation — binary verdicts
+### 1c. Two-tier study — apparatus error versus injected scenario noise
+
+Every scenario re-executed twice over on the same three benches: three
+fixed-seed replicates (Tier A) and five varied-seed replicates (Tier B).
+`HIL-A` and `HIL-B` are documented as reproducing a fixed seed exactly.
+
+```
+==============================================================================
+BENCH CHARACTERISATION - TWO-TIER GAGE R&R (crossed ANOVA)
+==============================================================================
+Metric              : min_ttc_s
+Tier A, fixed seed  : 15 scenarios x 3 benches x 3 replicates = 135 executions
+Tier B, varied seed : 15 scenarios x 3 benches x 5 replicates = 225 executions
+Tier column         : tier   (A = 'fixed_seed', B = 'varied_seed')
+
+DETERMINISM AUDIT  (Tier A - seed held fixed)
+------------------------------------------------------------------------------
+bench           declared  fixed-seed SD  widest spread  worst scenario   verdict
+HIL-A                yes       0.000000       0.000000  CUT_IN_100KPH         OK
+HIL-B                yes       0.012585       0.040143  DEBRIS_AVOIDANCE VIOLATED
+HIL-C                  -       0.080494       0.277432  CUT_IN_60KPH
+------------------------------------------------------------------------------
+  Declared deterministic: HIL-A, HIL-B. DETERMINISM VIOLATED by HIL-B (SD =
+  0.012585, widest fixed-seed spread 0.040143 on DEBRIS_AVOIDANCE). [...]
+
+SIDE BY SIDE  (each tier analysed independently)
+------------------------------------------------------------------------------
+quantity                            Tier A (fixed seed)  Tier B (varied seed)
+Repeatability EV                               0.047038              0.234585
+Reproducibility AV                             0.122154              0.106799
+Gage R&R                                       0.130898              0.257752
+Scenario variation PV                          0.697930              0.698791
+Total variation TV                             0.710099              0.744812
+%GRR                                             18.43%                34.61%
+ndc                                                   7                     3
+AIAG verdict                                   marginal          unacceptable
+replicates per cell                                   3                     5
+interaction                                    retained                pooled
+
+ALEATORY SCENARIO VARIANCE  (Tier B minus Tier A)
+------------------------------------------------------------------------------
+  apparatus (Tier A repeatability variance) :      0.002213
+  Tier B replicate variance                 :      0.055030
+  difference                                :      0.052818
+  aleatory scenario variance                :      0.052818   (SD 0.229821)
+  share of Tier B replicate variance        :         95.98%
+  F = var_B / var_A = 24.8718 on (208, 90) df, p = 0.0000
+  -> Tier B scatter exceeds Tier A significantly (alpha = 0.05)
+
+PER-BENCH SPLIT
+------------------------------------------------------------------------------
+bench            apparatus var    Tier B var   aleatory var   aleatory SD clamped
+HIL-A                 0.000000      0.052349       0.052349      0.228800       -
+HIL-B                 0.000158      0.047428       0.047269      0.217415       -
+HIL-C                 0.006479      0.067790       0.061311      0.247610       -
+```
+
+Two findings, and they point in opposite directions.
+
+The first is a correction. A single-tier study on the varied-seed data alone
+reports `%GRR = 34.6%` and `ndc = 3` — an unacceptable measurement system. But
+96% of that replicate variance disappears once the seed is held fixed: it was
+the injected scenario stochasticity, recovered here at an SD of 0.230 s against
+the 0.220 s the generator put in. The instrument itself sits at `%GRR = 18.4%`
+with `ndc = 7`, which is marginal rather than unacceptable. Those are different
+verdicts about different things, and the single-tier number was reporting the
+traffic model.
+
+The second is a defect. `HIL-B` is documented as reproducing a fixed seed
+exactly and does not: re-executing `DEBRIS_AVOIDANCE` with the seed pinned
+moved the answer by 0.040 s. That is not a small `%GRR` contribution to be
+noted and moved past. A bench that cannot reproduce its own fixed-seed run
+cannot support a seed-controlled regression comparison at all, which is what
+most release gating on a simulation bench actually rests on. The audit reports
+it as a verdict for that reason, rather than folding it into a variance term
+where it would disappear.
+
+Note the per-bench split: the three aleatory estimates (0.229, 0.217, 0.248)
+agree with each other, as they should — the injected stochasticity is a
+property of the scenario, not of the bench that ran it. A bench disagreeing
+with the others there would be evidence that the seed does not control the same
+models everywhere.
+
+### 1d. The tier guard
+
+```
+MissingTierError raised, as it should be:
+
+    the fixed-seed tier ('fixed_seed') is absent.
+
+    Without fixed-seed replicates there is nothing to subtract, and
+    the varied-seed repeatability term is an upper bound on the
+    apparatus error rather than an estimate of it: it also contains
+    every bit of deliberately injected scenario stochasticity.
+    Re-execute a subset of scenarios with the seed held fixed, or run
+    msa_ad.gage_rr.gage_rr_anova() on the tier you have and report the
+    result as what it is - a confounded figure.
+```
+
+### 1e. Bench characterisation — binary verdicts
 
 ```
 ==============================================================================
@@ -573,6 +695,11 @@ Hazards claimed     : 33
 ```
 * Gage R&R on min_ttc_s: %GRR = 36.2% (unacceptable), ndc = 3 (AIAG minimum 5: NOT met).
 * Bench HIL-C dominates the repeatability term: SD = 0.369 s, 4.4x the best bench.
+* Two-tier split: the apparatus accounts for 4.0% of the varied-seed replicate variance;
+  the other 96.0% is injected scenario stochasticity (SD 0.230 s). A single-tier study
+  charges all of it to repeatability: %GRR 18.4% (Tier A) vs 34.6% (Tier B).
+* Determinism audit FAILED for ['HIL-B']: declared to reproduce a fixed seed
+  exactly, and did not.
 * Attribute agreement: between-bench strict reproducibility = 0.533, Fleiss' kappa = 0.580.
 * Coverage-validity ratio: 99/120 = 0.825 [0.747, 0.883].
 * Hazard classes flagged at threshold 0.80: ['perception_false_negative', 'planning_timing'].
@@ -619,6 +746,103 @@ The **per-bench breakdown** is not part of standard AIAG output but is included
 because it is what actually localises a problem. The pooled `EV` term averages a
 single misbehaving bench together with two good ones; the per-bench
 repeatability SDs and a Levene test for equal within-bench variance do not.
+
+### Two-tier replicates: the apparatus versus the stochastic model
+
+A crossed Gage R&R treats every repeated execution as a replicate and calls
+whatever varies between them repeatability. On a simulation bench that reading
+is usually false. Replicates are normally produced by changing the random seed,
+and the seed is what drives the traffic-agent behaviour models, the sensor-noise
+models and the actuator-latency draws. Those were put there on purpose. Their
+scatter is aleatory variation *of the scenario*, and it belongs in a
+scenario-sampling argument, not in an instrument-error term. A study that
+conflates the two reports an `EV`, and therefore a `%GRR`, that mostly
+describes the stochastic model.
+
+`two_tier_gage_rr` replicates twice:
+
+| tier                            | seed         | its replicate variance contains       |
+| ------------------------------- | ------------ | ------------------------------------- |
+| **A** — `TIER_FIXED_SEED`       | held fixed   | apparatus only                        |
+| **B** — `TIER_VARIED_SEED`      | varied       | apparatus + injected scenario noise   |
+
+This is the same distinction EU 2022/1426 §3.2.6.4 and §3.4.5.9.5 already ask
+for, quoted earlier: stochastic models characterised *in terms of their
+variance*, with *deterministic re-execution* possible, and the *aleatory*
+component of uncertainty distinguished from the epistemic. Those paragraphs say
+to separate the two and do not say how. Tier A and Tier B are one concrete way
+to do it with a design a metrologist would recognise. I make no claim that it is
+the way the regulation intends, only that it produces the two quantities the
+regulation asks to see separated.
+
+The existing crossed ANOVA is run on each tier independently — the same code,
+under the same pooling rule — and the two results are reported side by side.
+Tier A is the **instrument characterisation**: its `%GRR`, `ndc` and per-bench
+terms are the ones that answer how much of a verdict came from the rig. Tier B
+is the **stochastic-model characterisation** over the same scenarios. They are
+not averaged into a single figure, because they are measurements of different
+things.
+
+The aleatory scenario variance follows by subtraction:
+
+```
+var_aleatory = var_repeatability(Tier B) − var_repeatability(Tier A)
+```
+
+unbiased under the design's own assumption — that the tiers differ only in
+whether the seed moves, so the apparatus term is common to both. Being a
+difference of two estimates it can come out negative when the true aleatory
+variance is small against sampling error. It is then clamped to zero **and
+flagged** (`aleatory_clamped`), because a silent clamp would upgrade "these
+tiers are indistinguishable" into "there is no scenario stochasticity", which
+is a much stronger claim and often the signature of a seed that is not reaching
+the stochastic models at all. A one-sided F-test on the ratio of the two
+repeatability terms is reported alongside, so a clamped estimate can be read
+together with the evidence for any difference existing.
+
+#### The determinism audit
+
+Tier A also settles a question that a variance term is the wrong shape for. If
+a bench documents deterministic re-execution — the same scenario, the same
+seed, the same answer — then its expected Tier-A variance is not "small", it is
+**exactly zero**. Any nonzero value contradicts the documentation.
+
+`deterministic_benches=[...]` declares which benches make that claim, and each
+one is audited against the **widest fixed-seed spread**: the largest max-minus-
+min across the replicates of a single cell. The statistic is a range rather
+than a deviation from the cell mean because the range of identical numbers is
+exactly zero, whereas their distance from a computed mean is not — auditing a
+zero-tolerance claim with a statistic carrying its own floating-point error
+would manufacture violations. `determinism_tolerance` exists for a known
+non-associative reduction in a logging path, defaults to `0.0`, and is printed
+in the report whatever it is set to.
+
+The result is a verdict (`upheld` / `violated` / `not_declared`), not a number
+folded into `%GRR`. A bench that cannot reproduce its own fixed-seed run cannot
+support a seed-controlled regression comparison, which is what release gating
+on a simulation bench usually rests on; that consequence does not survive being
+averaged into a variance component. Declaring nothing yields `not_declared`
+and says so explicitly — an empty audit is not a pass.
+
+Handled rather than assumed away:
+
+- **Unequal replicate counts between tiers** are allowed. Each tier must be
+  balanced in itself, which is what the ANOVA needs; both variance components
+  stay unbiased and only their precision differs. `replicates_match` records
+  it and the report says so. Fixed-seed re-execution is cheap and tells you
+  little once the apparatus is quiet; the varied-seed tier is sampling a
+  distribution and wants more draws.
+- **A missing tier** raises `MissingTierError`, with a message stating what can
+  still be computed. Without Tier A the varied-seed term is an upper bound on
+  apparatus error, not an estimate of it. Without Tier B the apparatus
+  characterisation is complete and the aleatory variance is simply not
+  available.
+- **Tiers covering different scenarios or different benches** raise
+  `TierMismatchError`. `%GRR`, `ndc` and `PV` are all relative to the studied
+  population, and subtracting a variance estimated over one from a variance
+  estimated over another is not meaningful.
+- **Binary input** raises `BinaryDataError`, checked across both tiers before
+  either analysis is attempted, for exactly the reasons below.
 
 ### Binary verdicts: attribute agreement, not variance decomposition
 
@@ -686,7 +910,7 @@ constraint and is why this component is smaller than the other two.
 
 ## Correctness
 
-`pytest` — 168 tests. The suite asserts the mathematics against independently
+`pytest` — 235 tests. The suite asserts the mathematics against independently
 known values, not merely that functions return without raising:
 
 - **Variance components** are checked against a 2×2×2 crossed design worked
@@ -709,8 +933,26 @@ known values, not merely that functions return without raising:
   exactly in the comments (1/3 and 7/12), and against the Fleiss (1971)
   30-subject table. **Cohen's kappa** uses the standard 2×2 example giving 0.40.
   A test records that Fleiss with two raters equals Scott's pi.
-- **Guard tests** cover binary rejection in seven encodings and assert the
-  error message explains *why* rather than only *that*.
+- **The two-tier split** is checked against a 2×2×2 design with a tier apiece,
+  worked through by hand in `tests/test_two_tier.py`: Tier-A replicates at
+  ±1 about their cell mean and Tier-B at ±3 give repeatability variances of
+  1.6 and 14.4 and therefore an aleatory variance of exactly 12.8, with
+  `F = 9.0` on (5, 5) degrees of freedom. Separately, synthetic tiers built
+  with an apparatus SD and an aleatory SD combined in quadrature are asserted
+  to recover both components within tolerance. A test also asserts that each
+  tier's result equals `gage_rr_anova` run directly on that tier, so the
+  two-tier path cannot drift into being a second implementation.
+- **The determinism audit** is asserted to fire on nonzero fixed-seed spread,
+  to stay silent for a bench nobody declared deterministic, to report
+  `not_declared` rather than a pass when nothing is declared, and to respect an
+  explicit tolerance in both directions.
+- **The clamping flag** is asserted on tiers deliberately built the wrong way
+  round, in the result object, in the verdict text and in the rendered report —
+  a negative aleatory estimate must never be clampable in silence.
+- **Guard tests** cover binary rejection in seven encodings, a missing tier in
+  either direction, mismatched tier labels, and tiers covering different
+  scenarios or benches; they assert the error messages explain *why* rather
+  than only *that*.
 - Tests assert that the bundled example actually contains findings, so the
   demonstration cannot silently decay into one where everything passes.
 
@@ -742,6 +984,18 @@ Please read this section before citing or relying on anything here.
   time — is described as part of the method but is **not implemented here**.
   The bias and linearity study requires reference values that many benches will
   not have.
+- **Two-tier caveats.** The subtraction assumes the apparatus term is the same
+  in both tiers — that the tiers differ only in whether the seed moves. A bench
+  whose noise depends on the workload violates that, and nothing here detects
+  it. No confidence interval is reported on the aleatory variance: it is a
+  difference of two mean squares, and an exact interval for that is a
+  Behrens–Fisher-shaped problem I have not attempted; the F-test on the ratio
+  is offered instead. With `pool_interaction="auto"` the two tiers can reach
+  different pooling decisions, which makes the two repeatability terms slightly
+  different quantities; `pooling_matches` records it and the report says so,
+  but the subtraction is still performed. The determinism audit is evidence
+  only over the scenarios executed — it cannot establish determinism, only
+  refute it.
 - **Statistical caveats.** The interaction pooling rule at alpha = 0.25 is
   AIAG's convention, not a derived optimum. `ndc` is a rule of thumb, not an
   inferential statistic. The kappa bands quoted in reports are Landis and Koch's

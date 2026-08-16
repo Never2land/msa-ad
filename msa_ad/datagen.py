@@ -13,7 +13,11 @@ The data is deliberately constructed to contain findings:
   verdicts disagree between benches on exactly those scenarios;
 * the ``perception_false_negative`` hazard class has a poor seeded-fault
   detection rate, while other classes are good but seeded too sparsely to
-  defend a 0.80 lower bound.
+  defend a 0.80 lower bound;
+* in the two-tier data, ``HIL-B`` is documented as reproducing a fixed seed
+  exactly and does not, so the determinism audit fires; and most of what a
+  single-tier study would charge to repeatability turns out to be injected
+  scenario stochasticity rather than apparatus error.
 
 A demonstration in which everything passes demonstrates nothing.
 """
@@ -26,7 +30,9 @@ import pandas as pd
 __all__ = [
     "DEFAULT_SEED",
     "TTC_PASS_THRESHOLD_S",
+    "DETERMINISTIC_BENCHES",
     "generate_bench_runs",
+    "generate_two_tier_runs",
     "generate_fault_catalogue",
     "generate_campaign_results",
     "generate_all",
@@ -46,6 +52,21 @@ BENCH_BIAS_S = {"HIL-A": 0.00, "HIL-B": -0.06, "HIL-C": 0.15}
 #: Per-bench within-scenario repeatability standard deviation, in seconds.
 #: HIL-C is the deliberately degraded bench.
 BENCH_REPEAT_SD_S = {"HIL-A": 0.08, "HIL-B": 0.10, "HIL-C": 0.35}
+
+#: Benches whose documentation claims that re-executing a scenario with the
+#: same seed reproduces the result exactly. ``HIL-B`` does not, which is the
+#: finding the determinism audit is there to surface.
+DETERMINISTIC_BENCHES = ("HIL-A", "HIL-B")
+
+#: Tier-A (fixed-seed) apparatus repeatability standard deviation, in seconds.
+#: This is what is left when the seed cannot vary: scheduler jitter,
+#: non-deterministic reduction order, real-time bus timing.
+BENCH_FIXED_SEED_SD_S = {"HIL-A": 0.000, "HIL-B": 0.012, "HIL-C": 0.090}
+
+#: Standard deviation of the deliberately injected scenario stochasticity, in
+#: seconds - traffic-agent behaviour and sensor-noise models responding to the
+#: seed. It is a property of the scenario, so it is the same on every bench.
+SCENARIO_ALEATORY_SD_S = 0.220
 
 #: True (population) minimum-TTC level of each scenario, in seconds. Several
 #: are placed near TTC_PASS_THRESHOLD_S so that verdicts can disagree.
@@ -143,6 +164,78 @@ def generate_bench_runs(
     return pd.DataFrame(rows)
 
 
+def generate_two_tier_runs(
+    seed: int = DEFAULT_SEED,
+    n_fixed_replicates: int = 3,
+    n_varied_replicates: int = 5,
+) -> pd.DataFrame:
+    """Generate synthetic runs for a two-tier fixed-seed / varied-seed study.
+
+    One row per execution, carrying a ``tier`` column with the labels
+    :data:`msa_ad.two_tier.TIER_FIXED_SEED` and
+    :data:`msa_ad.two_tier.TIER_VARIED_SEED`.
+
+    Both tiers share the same scenario-by-bench cell means, because they are
+    the same cells; they differ only in whether the seed moves between
+    replicates. Within a cell, Tier A repeats one seed and scatters by
+    :data:`BENCH_FIXED_SEED_SD_S` alone, while Tier B draws a new seed per
+    replicate and scatters by that apparatus term combined in quadrature with
+    :data:`SCENARIO_ALEATORY_SD_S`. So the aleatory variance recoverable by
+    subtraction is ``SCENARIO_ALEATORY_SD_S ** 2`` by construction.
+
+    The replicate counts deliberately differ between tiers: fixed-seed
+    re-execution is cheap to do a few times and tells you little once the
+    apparatus is quiet, whereas the varied-seed tier is sampling a
+    distribution and wants more draws.
+    """
+    rng = np.random.default_rng(seed + 3)
+    rows = []
+    scenarios = list(SCENARIO_TRUE_TTC_S)
+
+    interaction = {
+        (s, b): float(rng.normal(0.0, 0.06))
+        for s in scenarios
+        for b in BENCHES
+    }
+
+    for scenario in scenarios:
+        true_ttc = SCENARIO_TRUE_TTC_S[scenario]
+        for bench in BENCHES:
+            cell_mean = true_ttc + BENCH_BIAS_S[bench] + interaction[(scenario, bench)]
+            apparatus_sd = BENCH_FIXED_SEED_SD_S[bench]
+            varied_sd = float(
+                np.hypot(apparatus_sd, SCENARIO_ALEATORY_SD_S)
+            )
+            # Tier A: one seed, held fixed across every replicate of the cell.
+            held_seed = int(rng.integers(1, 10**6))
+            for rep in range(1, n_fixed_replicates + 1):
+                value = float(rng.normal(cell_mean, apparatus_sd))
+                rows.append(
+                    {
+                        "scenario_id": scenario,
+                        "bench_id": bench,
+                        "tier": "fixed_seed",
+                        "replicate": rep,
+                        "random_seed": held_seed,
+                        "min_ttc_s": round(value, 6),
+                    }
+                )
+            # Tier B: a new seed for every replicate.
+            for rep in range(1, n_varied_replicates + 1):
+                value = float(rng.normal(cell_mean, varied_sd))
+                rows.append(
+                    {
+                        "scenario_id": scenario,
+                        "bench_id": bench,
+                        "tier": "varied_seed",
+                        "replicate": rep,
+                        "random_seed": int(rng.integers(1, 10**6)),
+                        "min_ttc_s": round(value, 6),
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
 def generate_fault_catalogue(seed: int = DEFAULT_SEED) -> pd.DataFrame:
     """Generate a synthetic seeded-fault catalogue."""
     rng = np.random.default_rng(seed + 1)
@@ -231,10 +324,12 @@ def generate_campaign_results(
 def generate_all(seed: int = DEFAULT_SEED) -> dict[str, pd.DataFrame]:
     """Generate every example table in one call."""
     runs = generate_bench_runs(seed)
+    two_tier = generate_two_tier_runs(seed)
     catalogue = generate_fault_catalogue(seed)
     results = generate_campaign_results(catalogue, seed)
     return {
         "bench_runs": runs,
+        "bench_runs_two_tier": two_tier,
         "fault_catalogue": catalogue,
         "campaign_results": results,
     }

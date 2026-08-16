@@ -4,8 +4,9 @@
 Runs both analyses and prints both reports:
 
 1. Bench characterisation - Gage R&R on a continuous safety-margin metric
-   (minimum time-to-collision), then attribute agreement on the binary
-   pass/fail verdicts derived from it.
+   (minimum time-to-collision), then the two-tier fixed-seed / varied-seed
+   study that separates apparatus error from injected scenario stochasticity,
+   then attribute agreement on the binary pass/fail verdicts.
 2. Coverage-claim verification - seeded known faults through the campaign,
    then a claimed-versus-validated comparison.
 
@@ -28,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from msa_ad import (  # noqa: E402
     BinaryDataError,
+    MissingTierError,
     analyse_seeded_faults,
     attribute_agreement,
     compare_claimed_coverage,
@@ -36,15 +38,20 @@ from msa_ad import (  # noqa: E402
     render_coverage_claim_report,
     render_gage_rr_report,
     render_seeded_fault_report,
+    render_two_tier_report,
+    two_tier_gage_rr,
 )
 from msa_ad.datagen import (  # noqa: E402
     DEFAULT_SEED,
+    DETERMINISTIC_BENCHES,
     TTC_PASS_THRESHOLD_S,
     generate_all,
 )
+from msa_ad.two_tier import TIER_VARIED_SEED  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 BENCH_RUNS = HERE / "bench_runs.csv"
+BENCH_RUNS_TWO_TIER = HERE / "bench_runs_two_tier.csv"
 FAULT_CATALOGUE = HERE / "fault_catalogue.csv"
 CAMPAIGN_RESULTS = HERE / "campaign_results.csv"
 
@@ -58,9 +65,11 @@ CLAIMED_COVERAGE = 0.95
 def regenerate() -> None:
     tables = generate_all(DEFAULT_SEED)
     tables["bench_runs"].to_csv(BENCH_RUNS, index=False)
+    tables["bench_runs_two_tier"].to_csv(BENCH_RUNS_TWO_TIER, index=False)
     tables["fault_catalogue"].to_csv(FAULT_CATALOGUE, index=False)
     tables["campaign_results"].to_csv(CAMPAIGN_RESULTS, index=False)
     print(f"wrote {BENCH_RUNS}")
+    print(f"wrote {BENCH_RUNS_TWO_TIER}")
     print(f"wrote {FAULT_CATALOGUE}")
     print(f"wrote {CAMPAIGN_RESULTS}")
 
@@ -85,10 +94,11 @@ def main() -> int:
         regenerate()
         return 0
 
-    if not BENCH_RUNS.exists():
+    if not BENCH_RUNS.exists() or not BENCH_RUNS_TWO_TIER.exists():
         regenerate()
 
     runs = pd.read_csv(BENCH_RUNS)
+    two_tier_runs = pd.read_csv(BENCH_RUNS_TWO_TIER)
     catalogue = pd.read_csv(FAULT_CATALOGUE)
     results = pd.read_csv(CAMPAIGN_RESULTS)
 
@@ -103,6 +113,7 @@ def main() -> int:
     )
     print()
     print(f"bench runs        : {len(runs)} rows")
+    print(f"two-tier runs     : {len(two_tier_runs)} rows")
     print(f"fault catalogue   : {len(catalogue)} rows")
     print(f"campaign results  : {len(results)} rows")
     print(
@@ -138,7 +149,45 @@ def main() -> int:
         return 1
 
     # ---------------------------------------------------------------- 1c
-    banner("1c. BENCH CHARACTERISATION - binary pass/fail verdicts")
+    banner("1c. TWO-TIER STUDY - apparatus error vs injected scenario noise")
+    declared = " and ".join(DETERMINISTIC_BENCHES)
+    print(
+        "The replicates in 1a were produced by varying the random seed, so\n"
+        "their scatter is the apparatus *plus* the traffic-agent and\n"
+        "sensor-noise models responding to that seed. The two-tier data set\n"
+        "re-executes every scenario twice over: once with the seed held fixed,\n"
+        "and once with it varied.\n"
+        "\n"
+        f"{declared} are documented as reproducing a fixed seed exactly.\n"
+        "The audit below is what checks that, rather than assuming it.\n"
+    )
+    two_tier = two_tier_gage_rr(
+        two_tier_runs,
+        scenario_col="scenario_id",
+        bench_col="bench_id",
+        value_col="min_ttc_s",
+        deterministic_benches=DETERMINISTIC_BENCHES,
+    )
+    print(render_two_tier_report(two_tier))
+
+    # ---------------------------------------------------------------- 1d
+    banner("1d. GUARD - a two-tier study needs both tiers")
+    try:
+        two_tier_gage_rr(
+            two_tier_runs[two_tier_runs["tier"] == TIER_VARIED_SEED],
+            value_col="min_ttc_s",
+        )
+    except MissingTierError as exc:
+        print("MissingTierError raised, as it should be:")
+        print()
+        for line in str(exc).splitlines():
+            print(f"    {line}" if line else "")
+    else:  # pragma: no cover - would be a bug
+        print("ERROR: no exception raised; the guard is broken")
+        return 1
+
+    # ---------------------------------------------------------------- 1e
+    banner("1e. BENCH CHARACTERISATION - binary pass/fail verdicts")
     attr = attribute_agreement(
         runs,
         scenario_col="scenario_id",
@@ -181,6 +230,24 @@ def main() -> int:
         f"SD = {worst['repeatability_sd']:.3f} s, "
         f"{worst['sd_ratio_vs_best']:.1f}x the best bench."
     )
+    print(
+        f"* Two-tier split: the apparatus accounts for "
+        f"{100.0 - two_tier.pct_aleatory_of_varied:.1f}% of the varied-seed "
+        f"replicate variance;\n"
+        f"  the other {two_tier.pct_aleatory_of_varied:.1f}% is injected "
+        f"scenario stochasticity (SD {two_tier.aleatory_sd:.3f} s). A "
+        f"single-tier study\n"
+        f"  charges all of it to repeatability: %GRR "
+        f"{two_tier.fixed_seed.pct_grr:.1f}% (Tier A) vs "
+        f"{two_tier.varied_seed.pct_grr:.1f}% (Tier B)."
+    )
+    if two_tier.any_determinism_violation:
+        offenders = two_tier.determinism_violations["bench"].tolist()
+        print(
+            f"* Determinism audit FAILED for {offenders}: declared to "
+            "reproduce a fixed seed\n"
+            "  exactly, and did not."
+        )
     print(
         f"* Attribute agreement: between-bench strict reproducibility = "
         f"{attr.between_bench_strict[2]:.3f}, "

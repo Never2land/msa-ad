@@ -20,9 +20,11 @@ from .gage_rr import (
     _kappa_label,
 )
 from .seed_faults import CoverageClaimComparison, SeededFaultResult
+from .two_tier import TwoTierResult
 
 __all__ = [
     "render_gage_rr_report",
+    "render_two_tier_report",
     "render_attribute_report",
     "render_seeded_fault_report",
     "render_coverage_claim_report",
@@ -238,6 +240,202 @@ def render_gage_rr_report(result: GageRRResult) -> str:
                 "best addressed directly rather than through the pooled figure."
             )
         )
+    return "\n".join(out)
+
+
+def _tier_design(r: GageRRResult) -> str:
+    n = r.n_scenarios * r.n_benches * r.n_replicates
+    return (
+        f"{r.n_scenarios} scenarios x {r.n_benches} benches "
+        f"x {r.n_replicates} replicates = {n} executions"
+    )
+
+
+def render_two_tier_report(result: TwoTierResult) -> str:
+    """Render a two-tier (fixed-seed / varied-seed) Gage R&R result as text.
+
+    The two single-tier analyses are summarised side by side rather than
+    combined. For the full ANOVA table of either tier, pass
+    ``result.fixed_seed`` or ``result.varied_seed`` to
+    :func:`render_gage_rr_report`.
+    """
+    t = result
+    a, b = t.fixed_seed, t.varied_seed
+    out: list[str] = []
+    out += _header("BENCH CHARACTERISATION - TWO-TIER GAGE R&R (crossed ANOVA)")
+    out.append(
+        f"Metric              : {t.value_col}\n"
+        f"Tier A, fixed seed  : {_tier_design(a)}\n"
+        f"Tier B, varied seed : {_tier_design(b)}\n"
+        f"Tier column         : {t.tier_col}   "
+        f"(A = {t.fixed_seed_label!r}, B = {t.varied_seed_label!r})"
+    )
+    out.append("")
+    out.append(
+        _wrap(
+            "Tier A re-executes each scenario with the random seed held fixed, "
+            "so whatever varies is the apparatus. Tier B varies the seed, so "
+            "its variation is the apparatus plus the deliberately injected "
+            "scenario stochasticity. A single-tier study reports only the "
+            "second and calls all of it repeatability."
+        )
+    )
+
+    out.append("")
+    out.append("DETERMINISM AUDIT  (Tier A - seed held fixed)")
+    out.append(_rule())
+    out.append(
+        f"{'bench':<14}{'declared':>10}{'fixed-seed SD':>15}"
+        f"{'widest spread':>15}{'  worst scenario':<26}{'verdict':>8}"
+    )
+    for _, row in t.determinism_audit.iterrows():
+        declared = "yes" if row["declared_deterministic"] else "-"
+        if not row["declared_deterministic"]:
+            verdict = ""
+        else:
+            verdict = "VIOLATED" if row["violates"] else "OK"
+        scenario = str(row["worst_scenario"])[:24]
+        out.append(
+            f"{str(row['bench']):<14}{declared:>10}"
+            f"{row['repeatability_sd']:15.6f}{row['max_cell_range']:15.6f}"
+            f"  {scenario:<24}{verdict:>8}"
+        )
+    out.append(_rule())
+    out.append(
+        "  'widest spread' is the largest max-minus-min across the fixed-seed\n"
+        "  replicates of a single cell. A bench that re-executes a fixed seed\n"
+        "  deterministically has a spread of exactly zero."
+    )
+    out.append(
+        f"  Tolerance on a declared-deterministic bench: "
+        f"{t.determinism_tolerance:g}"
+    )
+    out.append(_wrap(t.determinism_verdict_text))
+
+    out.append("")
+    out.append("SIDE BY SIDE  (each tier analysed independently)")
+    out.append(_rule())
+    out.append(
+        f"{'quantity':<34}{'Tier A (fixed seed)':>21}{'Tier B (varied seed)':>22}"
+    )
+    rows = [
+        ("Repeatability EV", f"{a.ev:.6f}", f"{b.ev:.6f}"),
+        ("Reproducibility AV", f"{a.av:.6f}", f"{b.av:.6f}"),
+        ("Gage R&R", f"{a.grr:.6f}", f"{b.grr:.6f}"),
+        ("Scenario variation PV", f"{a.pv:.6f}", f"{b.pv:.6f}"),
+        ("Total variation TV", f"{a.tv:.6f}", f"{b.tv:.6f}"),
+        ("%GRR", f"{a.pct_grr:.2f}%", f"{b.pct_grr:.2f}%"),
+        ("ndc", f"{a.ndc}", f"{b.ndc}"),
+        ("AIAG verdict", a.verdict, b.verdict),
+        ("replicates per cell", f"{t.n_replicates_fixed}", f"{t.n_replicates_varied}"),
+        (
+            "interaction",
+            "pooled" if a.interaction_pooled else "retained",
+            "pooled" if b.interaction_pooled else "retained",
+        ),
+    ]
+    for name, va, vb in rows:
+        out.append(f"{name:<34}{va:>21}{vb:>22}")
+    out.append(_rule())
+    out.append(
+        _wrap(
+            "Tier A characterises the instrument: its %GRR and ndc are the ones "
+            "that answer how much of a verdict came from the rig. Tier B "
+            "characterises the stochastic model over the same scenarios. They "
+            "are different measurements of different things and are not "
+            "averaged into one figure."
+        )
+    )
+    if not t.replicates_match:
+        out.append(
+            _wrap(
+                f"The tiers used different replicate counts ({t.n_replicates_fixed} "
+                f"and {t.n_replicates_varied}). Each tier is balanced in itself, "
+                "so both variance components remain unbiased; only their "
+                "precision differs, which the degrees of freedom below record."
+            )
+        )
+    if not t.pooling_matches:
+        out.append(
+            _wrap(
+                "The two tiers made different interaction-pooling decisions, so "
+                "one repeatability term is a pooled mean square and the other is "
+                "the residual mean square. Force pool_interaction to 'always' or "
+                "'never' if the subtraction below needs both under one rule."
+            )
+        )
+
+    out.append("")
+    out.append("ALEATORY SCENARIO VARIANCE  (Tier B minus Tier A)")
+    out.append(_rule())
+    out.append(
+        f"  apparatus (Tier A repeatability variance) : {t.var_apparatus:13.6f}"
+    )
+    out.append(
+        f"  Tier B replicate variance                 : "
+        f"{t.var_varied_replicate:13.6f}"
+    )
+    out.append(
+        f"  difference                                : "
+        f"{t.var_aleatory_raw:13.6f}"
+        + ("   -> CLAMPED to 0" if t.aleatory_clamped else "")
+    )
+    out.append(
+        f"  aleatory scenario variance                : {t.var_aleatory:13.6f}"
+        f"   (SD {t.aleatory_sd:.6f})"
+    )
+    if not math.isnan(t.pct_aleatory_of_varied):
+        out.append(
+            f"  share of Tier B replicate variance        : "
+            f"{t.pct_aleatory_of_varied:13.2f}%"
+        )
+    if not math.isnan(t.aleatory_f):
+        out.append(
+            f"  F = var_B / var_A = {t.aleatory_f:.4f} on "
+            f"({t.aleatory_df_varied}, {t.aleatory_df_fixed}) df, "
+            f"p = {t.aleatory_p:.4f}"
+        )
+        out.append(
+            "  -> Tier B scatter exceeds Tier A significantly (alpha = "
+            f"{t.aleatory_alpha})"
+            if t.aleatory_significant
+            else "  -> Tier B scatter is not significantly above Tier A (alpha = "
+            f"{t.aleatory_alpha})"
+        )
+    out.append(_rule())
+    out.append(_wrap(t.aleatory_verdict_text))
+
+    out.append("")
+    out.append("PER-BENCH SPLIT")
+    out.append(_rule())
+    out.append(
+        f"{'bench':<14}{'apparatus var':>16}{'Tier B var':>14}"
+        f"{'aleatory var':>15}{'aleatory SD':>14}{'clamped':>9}"
+    )
+    for _, row in t.per_bench_aleatory.iterrows():
+        out.append(
+            f"{str(row['bench']):<14}{row['var_apparatus']:16.6f}"
+            f"{row['var_varied_replicate']:14.6f}{row['var_aleatory']:15.6f}"
+            f"{row['aleatory_sd']:14.6f}{'yes' if row['clamped'] else '-':>9}"
+        )
+    out.append(_rule())
+    out.append(
+        _wrap(
+            "The injected stochasticity is a property of the scenario, not of "
+            "the bench, so these per-bench aleatory estimates should agree with "
+            "each other. One that does not is evidence that the bench is adding "
+            "variation of its own, or that the seed does not control the same "
+            "models everywhere."
+        )
+    )
+    out.append(
+        _wrap(
+            "Each row uses that bench's own within-cell mean square. The "
+            "headline figure above uses the study-wide repeatability term, "
+            "which follows the AIAG interaction-pooling rule, so the rows need "
+            "not average exactly to it."
+        )
+    )
     return "\n".join(out)
 
 
