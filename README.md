@@ -281,19 +281,31 @@ and checks conformance by inspecting tool-qualification evidence. What the
 standard deliberately does not do is prescribe a measurement method, a metric,
 or an acceptance band for producing that evidence.
 
-msa-ad is one candidate for that missing layer. Mapping each study to the
-simulation-hazard topics the standard requires a safety case to address
-(clause numbers below follow the publicly available first-edition voting
-draft, §13.3.2, December 2019; confirm numbering against the current edition
-before citing it formally):
+msa-ad is one candidate for that missing layer. Clause 13.3.2 of the standard
+(UL 4600, 17 March 2023) requires that hazards and limitations associated with
+the use of simulations be identified, and its REQUIRED list at 13.3.2.2 names
+the topics a safety case has to address. Each msa-ad study answers one of them
+with a number rather than an assertion:
 
-| msa-ad study | UL 4600 §13.3.2 topic it evidences |
+| msa-ad study | UL 4600 13.3.2.2 topic it evidences |
 |---|---|
-| Bias / linearity vs. a declared reference | (c) physics simulation accuracy; (f) comparison of real-world performance with simulation results |
-| Cadence / clock monitors, `CLOCK_STEP`-class seeded faults | (c) representation and management of simulated time |
-| Seeded known-fault campaign | (c) simulation result reporting; performance of simulation monitoring functions |
-| Coverage-validity ratio with Wilson intervals | (e) experimental coverage; statistical analysis of results |
-| Two-tier replicate design | (b) real-time execution effects — sampled-input timing, scheduler jitter, loop-closure timing |
+| Bias / linearity vs. a declared reference | (c)(2) physics simulation accuracy |
+| Cadence / clock monitors, `CLOCK_STEP`-class seeded faults | (c)(3) representation and management of simulated time |
+| Seeded known-fault campaign | (c)(4) simulation result reporting, including failure reporting; (c)(5) performance of simulation monitoring functions |
+| Coverage-validity ratio with Wilson intervals | (b)(3) inclusion of low-probability safety-related workload elements — the coverage a seeded control can falsify |
+| Two-tier replicate design | (b)(2) real-time execution considerations — the standard's own examples are simulated-sensor-input timing, task scheduling jitter, and loop-closure timing |
+
+Clause 13.2.1 is the companion: the safety case must identify the tools used
+across the lifecycle — simulation among them — with vendor, version, and a
+description of use. Identification is where a tool becomes an object of
+evidence; measurement is what msa-ad adds on top of it.
+
+The standard also names, at 5.3.3.2(j), the failure mode this package exists
+to make measurable: arguing low risk from unvalidated simulation results alone
+is prone to missing risks introduced by simulation defects, modelling faults,
+and the simplifications made in building the abstraction. Validating the
+simulation is a proof obligation of its own, separate from whatever the
+simulation is used to prove.
 
 Two discipline notes. First, these outputs are offered as *candidate
 tool-qualification evidence* for the inspection the standard describes —
@@ -761,16 +773,17 @@ third-party validation.
 ### What the pilot's fault catalogue does and does not cover
 
 A fault catalogue is itself a coverage claim, so it gets a coverage
-statement. Against the simulation-hazard topics above, the pilot's five
-fault classes (`CLOCK_STEP`, `SPEED_BIAS`, `POSITION_STEP`, `SPEED_FREEZE`,
-`LEAD_SIGNAL_LOSS`) exercise the workload-data hazards — incorrect,
-corrupted, and missing data — and the simulated-time hazard. They do not
-exercise model-translation faults or physics-modelling accuracy, which are
-properties a bias study against a reference must establish, not properties a
-data-integrity injection can reach; and they do not include
-rendering-artifact faults for perception stacks, which the pilot does not
-run. A catalogue that stated only what it covers would be making the exact
-mistake this package exists to detect.
+statement. Against the topics listed at 13.3.2.2, the pilot's five fault
+classes (`CLOCK_STEP`, `SPEED_BIAS`, `POSITION_STEP`, `SPEED_FREEZE`,
+`LEAD_SIGNAL_LOSS`) exercise the workload-data hazards at (d) — incorrect,
+corrupted, and missing data — and the simulated-time hazard at (c)(3). They
+do not exercise model translation into simulation objects, (c)(1), or
+physics simulation accuracy, (c)(2): those are properties a bias study
+against a reference must establish, not properties a data-integrity
+injection can reach. Nor do they include rendering-artifact faults for
+perception stacks, which the pilot does not run. A catalogue that stated
+only what it covers would be making the exact mistake this package exists
+to detect.
 
 ---
 
