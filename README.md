@@ -265,7 +265,14 @@ is large. Ground I am aware of, and which anyone evaluating this should check:
 - NASA-STD-7009 on models-and-simulations credibility, and the ASME V&V series
   on verification and validation in computational modelling, including V&V 40's
   risk-informed credibility framework;
-- China's GB 44721 and GB/T 47025 series on ADS simulation test methods;
+- **GB/T 47025-2026** (China, in force 28 January 2026), whose **Appendix A is normative** and
+  titled "Assessment of simulation test credibility". Read in full from the Chinese government's
+  free standards portal: it requires that a correlation threshold be established (A.3.5), that
+  validation results meet it (A.5.3.2), and that the model's validation *method and threshold* be
+  recorded (A.2.2.2) — i.e. it treats both as applicant inputs and names no metric, no statistical
+  technique and no number. The mandatory **GB 47955-2026** carries a near-verbatim clone of the
+  same appendix. Also **GB/T 44721-2024**, whose simulation reference (clause 4.21) is conditional
+  and generic;
 - **ASAM's "Quantifying Simulation Quality" project** (P_2025_04), running since
   December 2025, whose stated premise is that no standardised metrics currently
   exist for assessing simulation quality — if that project publishes something
