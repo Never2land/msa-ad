@@ -235,14 +235,30 @@ addressed, bindingly, by EU 2022/1426 Annex III Part 4 and by UN-R157 Annex 4
 with Schedule 8, and conceptually by NASA-STD-7009 and the ASME V&V series. An
 earlier draft of this README understated that, and it was wrong to.
 
-**What I am claiming:** that no published protocol applies the production
-measurement-system-analysis method — a variance-component decomposition into
-repeatability and reproducibility with named acceptance bands, a linearity and
-stability study across the operating range, calibrated seeded-fault positive
-controls, and reproducibility across independent facilities under a common
-protocol — as an integrated qualification of an automated-driving validation
-bench treated as a measurement instrument. And that because no instrument defines
-the metric, credibility evidence is not comparable between organisations.
+**What I am claiming:** that I am not aware of a published protocol applying the
+production measurement-system-analysis method — a variance-component
+decomposition into repeatability and reproducibility with named acceptance
+bands, a linearity and stability study across the operating range, calibrated
+seeded-fault positive controls, and reproducibility across independent
+facilities under a common protocol — as an integrated qualification of an
+automated-driving validation bench treated as a measurement instrument. And that
+because no *regulation* defines the metric, the statistical technique or the
+acceptance threshold, credibility evidence is not comparable between
+organisations.
+
+**Two corrections to earlier drafts, made after reading the sources below.**
+First, the individual components are not all unprecedented: Riedmaier et al.
+already inject known modelling errors to measure whether a validation decision
+procedure detects them, and Chance et al. already characterise simulator
+determinism empirically against a stated tolerance. The claim is about the
+assembly and its object, not about the invention of the pieces. Second, "no
+instrument anywhere states a threshold" would be false: JAMA's *Automated
+Driving Safety Evaluation Framework* Ver 4.0 (March 2026) states numeric
+acceptance criteria for sensor-model agreement. It is an industry-association
+guideline with no legal force, written by the parties being assessed, in one
+national market, referenced normatively by no regulator — which is the
+comparability problem illustrated rather than refuted, but the word "none"
+should not be used unqualified.
 
 "I have not found it" remains a weak form of argument and the surrounding space
 is large. Ground I am aware of, and which anyone evaluating this should check:
@@ -253,7 +269,34 @@ is large. Ground I am aware of, and which anyone evaluating this should check:
   27 March 2025; authentic text ECE/TRANS/WP.29/2022/59/Rev.1) and **Schedule 8 of
   the 1958 Agreement Rev.3**, "General conditions for virtual testing methods"
   (authentic text ECE/TRANS/WP.29/2016/2, §2.2) — Schedule 8 has never been amended;
-- **UNECE NATM** (New Assessment/Test Method) master document;
+- **UNECE NATM** (New Assessment/Test Method) master document — and note its
+  history: ECE/TRANS/WP.29/2022/57, Annex III Appendix 2, "Example of correlation
+  methodologies", named eight measures with formulae (relative error criterion,
+  RMSE, L-infinity, Sprague-Geers, Pearson, t-test, ANOVA, Kolmogorov-Smirnov);
+  the 2024 successor ECE/TRANS/WP.29/2024/39 removed that appendix while keeping
+  the instruction to use "the correlation methodologies"; and UN Regulation No.
+  171 (E/ECE/TRANS/505/Rev.3/Add.170) inherits the instruction as "as defined in
+  Annex II", where R171's annexes run 1 to 5 and there is no Annex II;
+- **Chance, Ghobrial, McAreavey, Lemaignan, Pipe, Eder**, "On Determinism of Game
+  Engines used for Simulation-based Autonomous Vehicle Verification",
+  *IEEE T-ITS* (2022), arXiv:2104.06262 — **the closest published apparatus
+  characterisation, and the only one reproducible by an outsider.** 1000 repeated
+  runs per configuration, actor-path position as the measurand, maximum deviation
+  from the mean against an a priori 1 cm tolerance, with CPU/GPU utilisation as
+  the independent variable; determinism holds below roughly 75% utilisation. It
+  imports precision and tolerance vocabulary from mechanical engineering
+  explicitly. What it does not do: variance components, an operator or
+  reproducibility factor, bias or linearity, attribute agreement, seeded-fault
+  detector controls, or an acceptance framework beyond one chosen tolerance;
+- the interlaboratory tradition in automotive bench testing, which is the
+  precedent this package transposes: the WLTP brake-cycle study across eight
+  laboratories analysed per ISO 5725-2/-5 with Mandel's h and k statistics,
+  decomposing repeatability, sample effect, laboratory effect and total
+  reproducibility (*Atmosphere* 11(12):1309, 2020, with Ford, Audi, GM, Brembo,
+  TMD Friction and Link Engineering among the authors), and SAE 2010-01-1697 on
+  brake-dynamometer variability, which separates variability caused by test parts
+  from variability caused by the test setup. The method is standard practice on
+  physical automotive benches and has not been pointed at simulation benches;
 - ISO 26262 (functional safety), ISO 21448 (SOTIF), and ISO 34502 Annex F,
   "Qualification of virtual test platforms" — which is informative rather than
   normative, and I have not read its body text;
@@ -277,8 +320,30 @@ is large. Ground I am aware of, and which anyone evaluating this should check:
   December 2025, whose stated premise is that no standardised metrics currently
   exist for assessing simulation quality — if that project publishes something
   that does what is described here, this package should defer to it;
-- the software-engineering mutation-testing literature, the closest analogue I
-  know of to the seeded-fault component.
+- **Riedmaier, Schneider, Danquah, Schick, Diermeyer**, "Non-deterministic model
+  validation methodology for simulation-based safety assessment of automated
+  vehicles", *Simulation Modelling Practice and Theory* 109:102274 (2021), and
+  Riedmaier's TUM dissertation (mediaTUM 1615375, open access), which contains
+  it. **This is the closest prior art to the seeded-fault component, and it
+  anticipates part of it.** Using the Method of Manufactured Universes, they
+  intentionally inject modelling errors of known magnitude and score whether
+  their VV&UQ decision procedure detects them, evaluated with a binary
+  classifier reporting precision and recall. Their own summary: "The validation
+  methodology is itself validated by intentionally injecting modeling errors to
+  determine if it can identify and correct them." What remains different here is
+  the object being graded — they grade the *decision rule*, this package grades
+  the *bench and its monitors* — and the design: theirs is a single fault of one
+  magnitude in one direction, deliberately without measurement noise, reported as
+  point estimates with no confidence interval, with no claimed coverage figure to
+  compare against and no acceptance band. Those are differences of scope, not of
+  kind, and anyone assessing novelty here should read their work first;
+- the software-engineering mutation-testing literature, the nearest analogue in
+  that field to the seeded-fault component. Note that mutation testing grades a
+  *test suite*, not the apparatus or its oracle; Shin et al., "Towards
+  Safety-Aware Mutation Testing for Autonomous Driving Systems"
+  (arXiv:2606.26456, June 2026), is a vision paper whose §IV-E states this
+  package's own problem as an open challenge — repeated simulator iterations
+  assessed with statistically rigorous confidence intervals.
 
 If any of these — or anything else — already prescribes a variance-decomposed
 repeatability and reproducibility characterisation of a validation bench with
