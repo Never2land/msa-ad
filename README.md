@@ -5,6 +5,13 @@
 Gage R&R, attribute agreement, and seeded-fault coverage verification for
 simulation, hardware-in-the-loop (HIL) and fault-injection benches.
 
+It quantifies the repeatability, reproducibility, reference-relative bias and
+monitor effectiveness of a bench. It is evidence that supports a tool-validation
+argument; it does not, on its own, establish that a simulation is accurate or
+valid for a given operational design domain — that is a separate obligation
+requiring an independent physical reference. See
+[Where this sits in UL 4600](#where-this-sits-in-ul-4600).
+
 Python ≥ 3.10. Depends on numpy, scipy and pandas only. Apache-2.0.
 
 ---
@@ -197,10 +204,13 @@ One consequence worth drawing out, because it points at how this would actually
 be adopted rather than at a dispute: Clause 11's **method 1c, "validation of the
 software tool"**, requires test cases derived from the tool's use cases and
 evidence that it meets its requirements. It does not say how that evidence should
-be quantified. **An MSA study is a legitimate way to discharge 1c**, and a more
-informative one than a pass/fail test report, because it yields a number that can
-be trended and compared rather than a verdict that cannot. If you already run
-Clause 11 on your benches, this is meant to slot into it, not to compete with it.
+be quantified. **An MSA study may contribute quantitative evidence to a 1c
+argument** — a number that can be trended and compared, rather than a verdict
+that cannot — but it does not by itself discharge 1c: validation of a tool
+against its use cases includes establishing that the tool produces correct
+results, which is a separate obligation from characterising the dispersion of
+what it produces. If you already run Clause 11 on your benches, this is meant to
+slot into it, not to compete with it.
 
 ### The same distinction, applied to coverage
 
@@ -247,8 +257,11 @@ is large. Ground I am aware of, and which anyone evaluating this should check:
 - ISO 26262 (functional safety), ISO 21448 (SOTIF), and ISO 34502 Annex F,
   "Qualification of virtual test platforms" — which is informative rather than
   normative, and I have not read its body text;
-- UL 4600, which discusses validation and simulation credibility — I have not
-  read it;
+- **UL 4600** (17 March 2023), whose tool-qualification chapter requires that
+  hazards and limitations associated with the use of simulations be identified,
+  and whose safety-argument chapter names arguing from unvalidated simulation
+  as a pitfall — read via UL's free digital view and mapped against this
+  package in the section below;
 - NASA-STD-7009 on models-and-simulations credibility, and the ASME V&V series
   on verification and validation in computational modelling, including V&V 40's
   risk-informed credibility framework;
@@ -289,7 +302,7 @@ with a number rather than an assertion:
 
 | msa-ad study | UL 4600 13.3.2.2 topic it evidences |
 |---|---|
-| Bias / linearity vs. a declared reference | (c)(2) physics simulation accuracy |
+| Bias / linearity vs. a declared reference | (c)(2) physics simulation accuracy — **only to the extent the reference is independent.** Against an independently calibrated physical reference this is accuracy evidence; against an anchor channel drawn from the same source (as in the pilot below) it is evidence of channel disagreement and nothing more |
 | Cadence / clock monitors, `CLOCK_STEP`-class seeded faults | (c)(3) representation and management of simulated time |
 | Seeded known-fault campaign | (c)(4) simulation result reporting, including failure reporting; (c)(5) performance of simulation monitoring functions |
 | Coverage-validity ratio with Wilson intervals | (b)(3) inclusion of low-probability safety-related workload elements — the coverage a seeded control can falsify |
@@ -306,6 +319,18 @@ is prone to missing risks introduced by simulation defects, modelling faults,
 and the simplifications made in building the abstraction. Validating the
 simulation is a proof obligation of its own, separate from whatever the
 simulation is used to prove.
+
+**What this package does not do, stated at the same volume as what it does.**
+Establishing that a simulation is accurate enough for its intended use is a
+proof obligation in its own right, and it is not the obligation msa-ad
+discharges. Repeatability, reproducibility, and monitor effectiveness are
+properties of the instrument, not of its correctness: a bench can reproduce the
+same wrong answer indefinitely and score well on every study in this package.
+Accuracy validation requires a stated intended use, an independent physical
+reference, acceptance bounds fixed before results are seen, and separated
+calibration and validation data — none of which follows from a %GRR figure.
+The right way to read these studies is as evidence *supporting* a tool-validation
+argument, never as a substitute for the accuracy leg of it.
 
 Two discipline notes. First, these outputs are offered as *candidate
 tool-qualification evidence* for the inspection the standard describes —
