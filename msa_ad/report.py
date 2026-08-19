@@ -94,6 +94,30 @@ def _wrap(text: str, indent: str = "  ") -> str:
     return "\n".join(out)
 
 
+def _claim_boundary(extra: str | None = None) -> list[str]:
+    """Default claim-boundary block appended to every rendered report.
+
+    Numbers without a stated boundary invite over-reading; a report that
+    characterises an instrument must also say what it does not establish.
+    """
+    out = [
+        "",
+        "CLAIM BOUNDARY",
+        _rule(),
+        "  These figures characterise the measurement system that produced",
+        "  them, on the data supplied. They are not, by themselves, evidence",
+        "  that the system under test is safe, that scenario coverage is",
+        "  adequate, or that results transfer to other benches, datasets, or",
+        "  operating conditions. Report the study design, exclusions, and",
+        "  input provenance alongside these numbers.",
+    ]
+    if extra:
+        import textwrap
+
+        out += ["  " + ln for ln in textwrap.wrap(extra, width=66)]
+    return out
+
+
 def render_gage_rr_report(result: GageRRResult) -> str:
     """Render a crossed ANOVA Gage R&R result as plain text."""
     r = result
@@ -240,6 +264,7 @@ def render_gage_rr_report(result: GageRRResult) -> str:
                 "best addressed directly rather than through the pooled figure."
             )
         )
+    out += _claim_boundary()
     return "\n".join(out)
 
 
@@ -436,6 +461,7 @@ def render_two_tier_report(result: TwoTierResult) -> str:
             "not average exactly to it."
         )
     )
+    out += _claim_boundary()
     return "\n".join(out)
 
 
@@ -561,6 +587,7 @@ def render_attribute_report(result: AttributeAgreementResult) -> str:
             f"  {len(df)} of {a.n_scenarios} scenarios did not produce a "
             "unanimous verdict."
         )
+    out += _claim_boundary()
     return "\n".join(out)
 
 
@@ -658,6 +685,7 @@ def render_seeded_fault_report(result: SeededFaultResult) -> str:
             "  Not a defect. These faults were injected outside the declared\n"
             "  detection claim and are excluded from the denominator."
         )
+    out += _claim_boundary("A high detection rate on conspicuous faults is a smoke test of the protocol, not a detection-limit study.")
     return "\n".join(out)
 
 
@@ -742,6 +770,7 @@ def render_coverage_claim_report(cmp: CoverageClaimComparison) -> str:
                 f"  {_ci((row['ci_low'], row['ci_high'])):<22}"
                 f"{row['discrepancy']:+14.4f}"
             )
+    out += _claim_boundary()
     return "\n".join(out)
 
 
@@ -791,4 +820,5 @@ def render_bias_report(result: BiasLinearityResult) -> str:
             f"{row['reference']:12.4f}{int(row['n']):>6}"
             f"{row['mean_bias']:14.6f}{sd:>12}"
         )
+    out += _claim_boundary()
     return "\n".join(out)

@@ -269,6 +269,41 @@ is in this list because looking for the counter-argument found it.
 
 ---
 
+## Where this sits in UL 4600
+
+UL 4600 (Standard for Safety for the Evaluation of Autonomous Products) makes
+simulation a first-class safety-case concern: its tool-qualification chapter
+requires that hazards and limitations associated with the use of simulations
+be identified — from physics-modelling accuracy and the handling of simulated
+time, through result reporting and the performance of simulation monitoring
+functions, to experimental coverage and the statistical analysis of results —
+and checks conformance by inspecting tool-qualification evidence. What the
+standard deliberately does not do is prescribe a measurement method, a metric,
+or an acceptance band for producing that evidence.
+
+msa-ad is one candidate for that missing layer. Mapping each study to the
+simulation-hazard topics the standard requires a safety case to address
+(clause numbers below follow the publicly available first-edition voting
+draft, §13.3.2, December 2019; confirm numbering against the current edition
+before citing it formally):
+
+| msa-ad study | UL 4600 §13.3.2 topic it evidences |
+|---|---|
+| Bias / linearity vs. a declared reference | (c) physics simulation accuracy; (f) comparison of real-world performance with simulation results |
+| Cadence / clock monitors, `CLOCK_STEP`-class seeded faults | (c) representation and management of simulated time |
+| Seeded known-fault campaign | (c) simulation result reporting; performance of simulation monitoring functions |
+| Coverage-validity ratio with Wilson intervals | (e) experimental coverage; statistical analysis of results |
+| Two-tier replicate design | (b) real-time execution effects — sampled-input timing, scheduler jitter, loop-closure timing |
+
+Two discipline notes. First, these outputs are offered as *candidate
+tool-qualification evidence* for the inspection the standard describes —
+nothing here is, or should ever be described as, "UL 4600 compliant."
+Second, the standard's warning that machine-learning systems can exploit
+rendering artifacts in simulation describes a fault class this package does
+not yet implement: seeded rendering-artifact faults for perception benches
+are a natural future addition to the catalogue, and are listed here so the
+absence is a stated limitation rather than an oversight.
+
 ## Install and run
 
 ```bash
@@ -722,6 +757,20 @@ declared anchor channel, and a pre-registered seeded known-fault campaign of
 boundary explicitly: this is a reproducible method demonstration on public
 real-road measurements, not an industrial HIL/SIL bench qualification and not
 third-party validation.
+
+### What the pilot's fault catalogue does and does not cover
+
+A fault catalogue is itself a coverage claim, so it gets a coverage
+statement. Against the simulation-hazard topics above, the pilot's five
+fault classes (`CLOCK_STEP`, `SPEED_BIAS`, `POSITION_STEP`, `SPEED_FREEZE`,
+`LEAD_SIGNAL_LOSS`) exercise the workload-data hazards — incorrect,
+corrupted, and missing data — and the simulated-time hazard. They do not
+exercise model-translation faults or physics-modelling accuracy, which are
+properties a bias study against a reference must establish, not properties a
+data-integrity injection can reach; and they do not include
+rendering-artifact faults for perception stacks, which the pilot does not
+run. A catalogue that stated only what it covers would be making the exact
+mistake this package exists to detect.
 
 ---
 
