@@ -860,8 +860,10 @@ the U.S. DOT/FHWA NGSIM US-101 vehicle-trajectory dataset (DOI
 [10.21949/1504477](https://doi.org/10.21949/1504477)): a balanced crossed
 Gage R&R over 30 real following-event windows x 3 speed-estimation
 configurations x 3 sampling-phase replicates, bias and linearity against a
-declared anchor channel, and a pre-registered seeded known-fault campaign of
-100 positive controls. Every input, output, hash and parameter is recorded in
+declared anchor channel, and a predeclared seeded known-fault campaign of
+100 positive controls (fault catalogue and acceptance logic are declared in
+the executing code and recorded in the released audit trail; the campaign
+was not independently preregistered). Every input, output, hash and parameter is recorded in
 `example/ngsim_pilot/outputs/`, and `outputs/report.md` states the claim
 boundary explicitly: this is a reproducible method demonstration on public
 real-road measurements, not an industrial HIL/SIL bench qualification and not
